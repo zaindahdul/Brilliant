@@ -16,7 +16,7 @@ type V = { id: string; x: number; y: number; spec: VectorSpec };
 function evalGoal(config: VectorsConfig, vecs: V[], comb: { a: number; b: number }): boolean {
   const g = config.goal;
   if (!g) return true;
-  const tol = g.tolerance ?? 1e-6;
+  const tol = ("tolerance" in g && g.tolerance) || 1e-6;
   const get = (id: string) => vecs.find((v) => v.id === id);
   const close = (p: [number, number], q: [number, number]) => Math.abs(p[0] - q[0]) <= tol && Math.abs(p[1] - q[1]) <= tol;
   switch (g.type) {
@@ -43,6 +43,11 @@ function evalGoal(config: VectorsConfig, vecs: V[], comb: { a: number; b: number
       if (!v || !w) return false;
       const nonzero = Math.hypot(v.x, v.y) > 1e-9;
       return nonzero && Math.abs(v.x * w.x + v.y * w.y) <= tol;
+    }
+    case "span-plane": {
+      const [u, w] = g.of.map(get);
+      if (!u || !w) return false;
+      return Math.abs(u.x * w.y - u.y * w.x) > 1e-9;
     }
   }
 }

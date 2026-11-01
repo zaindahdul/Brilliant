@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { allUnitIds, getUnit } from "@/content/course";
@@ -13,8 +14,8 @@ export async function generateMetadata(props: PageProps<"/practice/[unitId]">): 
   return { title: found ? `Level check · ${found.unit.title}` : "Practice" };
 }
 
-export default async function PracticePage(props: PageProps<"/practice/[unitId]">) {
-  const { unitId } = await props.params;
+async function PracticeLoader({ params }: { params: PageProps<"/practice/[unitId]">["params"] }) {
+  const { unitId } = await params;
   const found = getUnit(unitId);
   if (!found) notFound();
   const { unit, course } = found;
@@ -27,5 +28,13 @@ export default async function PracticePage(props: PageProps<"/practice/[unitId]"
       generatorIds={unit.generators}
       backHref={`/course/${course.id}#${unit.id}`}
     />
+  );
+}
+
+export default function PracticePage(props: PageProps<"/practice/[unitId]">) {
+  return (
+    <Suspense fallback={<div className="flex min-h-dvh items-center justify-center text-muted">Loading practice…</div>}>
+      <PracticeLoader params={props.params} />
+    </Suspense>
   );
 }

@@ -84,7 +84,7 @@ export function RowReducer({ config, onGoal, disabled = false }: Props) {
     <div className="mx-auto grid w-full max-w-[520px] gap-3">
       <div className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-surface p-4">
         <div className="text-2xl">
-          <TeX tex={fracMatrixToLatex(current, config.augmented)} display />
+          <TeX tex={fracMatrixToLatex(current, config.augmented, config.rightColumns ?? 1)} display />
         </div>
         <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
           <span className={cn("rounded-full px-2.5 py-0.5 font-semibold", inRef ? "bg-primary-soft text-primary-ink" : "bg-surface-2 text-muted")}>{inRef ? "✓ echelon form" : "not yet in echelon form"}</span>

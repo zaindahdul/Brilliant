@@ -65,7 +65,9 @@ export interface VectorsConfig {
     | { type: "vector-equals"; id: string; target: [number, number]; tolerance?: number }
     | { type: "sum-equals"; of: string[]; target: [number, number]; tolerance?: number }
     | { type: "combination-equals"; target: [number, number]; tolerance?: number }
-    | { type: "orthogonal-to"; id: string; to: string; tolerance?: number };
+    | { type: "orthogonal-to"; id: string; to: string; tolerance?: number }
+    /** The two vectors must be linearly independent (span the whole plane). */
+    | { type: "span-plane"; of: [string, string] };
 }
 
 export interface TransformConfig {
@@ -90,8 +92,10 @@ export interface TransformConfig {
 export interface RowReducerConfig {
   /** Entries may be numbers or fraction strings like "1/2". */
   matrix: (number | string)[][];
-  /** Draw a bar before the last column. */
+  /** Draw a bar before the last column (or before the last `rightColumns` columns). */
   augmented?: boolean;
+  /** Number of columns to the right of the bar, e.g. n for [A | I]. Default 1. */
+  rightColumns?: number;
   /** What counts as "done" for a goal step. */
   target?: "ref" | "rref" | "free";
   /** Row labels, e.g. for showing variables. */

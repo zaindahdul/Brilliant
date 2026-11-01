@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { courses, getCourseMeta } from "@/content/course";
@@ -13,9 +14,17 @@ export async function generateMetadata(props: PageProps<"/course/[courseId]">): 
   return { title: meta ? meta.title : "Course" };
 }
 
-export default async function CoursePage(props: PageProps<"/course/[courseId]">) {
-  const { courseId } = await props.params;
+async function CourseLoader({ params }: { params: PageProps<"/course/[courseId]">["params"] }) {
+  const { courseId } = await params;
   const meta = getCourseMeta(courseId);
   if (!meta) notFound();
   return <CourseMap course={meta} />;
+}
+
+export default function CoursePage(props: PageProps<"/course/[courseId]">) {
+  return (
+    <Suspense fallback={<div className="mx-auto max-w-5xl px-4 py-8 text-muted">Loading course…</div>}>
+      <CourseLoader params={props.params} />
+    </Suspense>
+  );
 }

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { allLessonIds, getLesson } from "@/content/course";
@@ -13,10 +14,18 @@ export async function generateMetadata(props: PageProps<"/lesson/[lessonId]">): 
   return { title: found ? found.lesson.title : "Lesson" };
 }
 
-export default async function LessonPage(props: PageProps<"/lesson/[lessonId]">) {
-  const { lessonId } = await props.params;
+async function LessonLoader({ params }: { params: PageProps<"/lesson/[lessonId]">["params"] }) {
+  const { lessonId } = await params;
   const found = getLesson(lessonId);
   if (!found) notFound();
   const { lesson, unit, course, next } = found;
   return <LessonPlayer lesson={lesson} unit={{ id: unit.id, title: unit.title }} course={{ id: course.id, title: course.title }} next={next ? { id: next.id, title: next.title } : null} />;
+}
+
+export default function LessonPage(props: PageProps<"/lesson/[lessonId]">) {
+  return (
+    <Suspense fallback={<div className="flex min-h-dvh items-center justify-center text-muted">Loading lesson…</div>}>
+      <LessonLoader params={props.params} />
+    </Suspense>
+  );
 }

@@ -107,11 +107,12 @@ export function fracMatrixToNumbers(m: FracMatrix): number[][] {
   return m.map((row) => row.map(toNumber));
 }
 
-export function fracMatrixToLatex(m: FracMatrix, augmented = false): string {
+export function fracMatrixToLatex(m: FracMatrix, augmented = false, rightColumns = 1): string {
   const cols = m[0]?.length ?? 0;
   const body = m.map((row) => row.map(fracToLatex).join("&")).join("\\\\");
+  const right = Math.max(1, Math.min(rightColumns, cols - 1));
   if (augmented && cols > 1) {
-    const spec = "c".repeat(cols - 1) + "|c";
+    const spec = "c".repeat(cols - right) + "|" + "c".repeat(right);
     return `\\left[\\begin{array}{${spec}}${body}\\end{array}\\right]`;
   }
   return `\\begin{bmatrix}${body}\\end{bmatrix}`;
