@@ -45,7 +45,7 @@ export interface VectorsConfig {
   range?: number;
   vectors: VectorSpec[];
   /** Overlay options. */
-  show?: Array<"sum" | "difference" | "parallelogram" | "combination" | "span" | "tip-to-tail" | "coordinates">;
+  show?: Array<"sum" | "difference" | "parallelogram" | "combination" | "span" | "tip-to-tail" | "coordinates" | "dot">;
   /** c1·u + c2·v, with optional sliders for the learner. */
   combination?: {
     of: [string, string];

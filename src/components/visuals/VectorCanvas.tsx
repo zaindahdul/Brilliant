@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { VectorsConfig, VectorSpec } from "@/content/types";
 import { Arrow, ArrowDefs, Grid, Handle, colorVar, fmt, makePlane, snapTo, useDrag } from "./plane";
 import { Math as TeX } from "@/components/ui/RichText";
+import { cn } from "@/lib/cn";
 
 interface Props {
   config: VectorsConfig;
@@ -244,6 +245,12 @@ export function VectorCanvas({ config, onGoal, disabled = false }: Props) {
         {show.has("difference") && diff && (
           <span className="font-mono text-purple">
             diff = ({fmt(diff[0])}, {fmt(diff[1])})
+          </span>
+        )}
+        {show.has("dot") && first && second && (
+          <span className={cn("font-mono", Math.abs(first.x * second.x + first.y * second.y) < 1e-9 ? "text-primary" : "text-muted")}>
+            {first.spec.label ?? "u"} · {second.spec.label ?? "v"} = {fmt(first.x * second.x + first.y * second.y)}
+            {Math.abs(first.x * second.x + first.y * second.y) < 1e-9 ? " — orthogonal" : ""}
           </span>
         )}
         {show.has("combination") && combResult && (
