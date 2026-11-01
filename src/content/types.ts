@@ -125,13 +125,133 @@ export interface LinesConfig {
   goal?: { type: "solutions"; target: "one" | "none" | "infinite" };
 }
 
+
+/* ------------------------------------------------------------------ */
+/* Solid mechanics visuals                                             */
+/* ------------------------------------------------------------------ */
+
+/**
+ * An axial bar (Govindjee ch. 2): segments left -> right, point loads, an
+ * optional uniform distributed load, fixed ends. Draws the bar with its loads
+ * and the internal-force R(x), stress sigma(x) and displacement u(x) diagrams.
+ * Units are whatever the author passes (labels via `units`); the component
+ * only does arithmetic.
+ */
+export interface AxialBarConfig {
+  /** Segments left -> right. Lengths add up to the bar length. */
+  segments: { length: number; E: number; A: number; label?: string }[];
+  /** Point loads at distance x from the left end; positive pulls toward +x (to the right). */
+  loads?: { x: number; P: number; label?: string }[];
+  /** Uniform distributed axial load per unit length, positive toward +x. */
+  distributed?: number;
+  /** Which ends are built in. "both" is statically indeterminate (solved by compatibility u(L) = 0). */
+  fixed: "left" | "right" | "both";
+  /** Diagrams to draw below the bar; default ["R"]. */
+  show?: Array<"R" | "sigma" | "u">;
+  /** Let the learner change the point-load magnitudes (and the distributed load) with sliders. */
+  sliders?: boolean;
+  units?: { length?: string; force?: string; stress?: string; displacement?: string };
+}
+
+/**
+ * A 2-D stress element (Govindjee 3.2) drawn with the textbook convention:
+ * first index = cut normal, second = force direction; positive components
+ * point in +coordinate directions on positive faces. Optional traction on an
+ * inclined cut via Cauchy's law t = sigma n.
+ */
+export interface StressElementConfig {
+  sxx: number;
+  syy: number;
+  sxy: number;
+  /** Sliders for the three components (range +-max). */
+  sliders?: boolean;
+  /** Show the traction vector on a cut whose outward normal makes angle theta (degrees, from +x), with a theta slider. */
+  cut?: { theta: number; slider?: boolean };
+  max?: number;
+  unit?: string;
+}
+
+/**
+ * A square element deformed by a homogeneous displacement gradient
+ * (Govindjee ch. 4): shows the deformed shape, exx, eyy, exy (tensor) and
+ * gxy = 2 exy (engineering), and the rotation.
+ */
+export interface StrainGridConfig {
+  /** [[du/dx, du/dy], [dv/dx, dv/dy]] - small numbers such as 0.1. */
+  grad: [[number, number], [number, number]];
+  sliders?: boolean;
+  /** Drawing exaggeration factor (default 1). */
+  scale?: number;
+}
+
+/** Circular shaft cross-section under torque T (Govindjee 7.1-7.3): tau(r) = T r / J, solid or hollow. */
+export interface TorsionSectionConfig {
+  T: number;
+  ro: number;
+  ri?: number;
+  /** Shear modulus; when given the twist rate phi' = T/GJ is shown too. */
+  G?: number;
+  sliders?: boolean;
+  units?: { torque?: string; length?: string; stress?: string };
+}
+
+export type BeamSectionShape =
+  | { kind: "rect"; b: number; h: number }
+  | { kind: "tee"; bf: number; tf: number; hw: number; tw: number }
+  | { kind: "ibeam"; bf: number; tf: number; hw: number; tw: number }
+  | { kind: "box"; b: number; h: number; t: number };
+
+/** Bending stress on a cross-section (Govindjee 8.3): neutral axis at the centroid, sigma = -M y / I. */
+export interface BeamSectionConfig {
+  M: number;
+  section: BeamSectionShape;
+  sliders?: boolean;
+  units?: { moment?: string; length?: string; stress?: string };
+}
+
+export type BeamLoad =
+  | { kind: "point"; x: number; P: number }
+  | { kind: "udl"; from: number; to: number; w: number }
+  | { kind: "moment"; x: number; M: number };
+
+/**
+ * Shear-force and bending-moment diagrams (Govindjee 8.2). Loads P and w are
+ * positive DOWNWARD (the way problems state them); V and M follow the course
+ * sign convention (V = integral of sigma_xy dA, dV/dx + q = 0, dM/dx + V = 0, q positive upward).
+ */
+export interface ShearMomentConfig {
+  length: number;
+  support: "simple" | "cantilever-left" | "cantilever-right";
+  loads: BeamLoad[];
+  /** Sliders for point-load positions/magnitudes. */
+  sliders?: boolean;
+  units?: { length?: string; force?: string };
+}
+
+/** Thin-walled pressure vessel (Govindjee 6.2): hoop/axial (cylinder) or membrane (sphere) stress. */
+export interface PressureVesselConfig {
+  kind: "cylinder" | "sphere";
+  p: number;
+  r: number;
+  t: number;
+  sliders?: boolean;
+  units?: { pressure?: string; length?: string; stress?: string };
+}
+
 export type VisualSpec =
   | { kind: "lines"; config: LinesConfig }
   | { kind: "vectors"; config: VectorsConfig }
   | { kind: "transform"; config: TransformConfig }
   | { kind: "row-reducer"; config: RowReducerConfig }
   | { kind: "projection"; config: ProjectionConfig }
-  | { kind: "least-squares"; config: LeastSquaresConfig };
+  | { kind: "least-squares"; config: LeastSquaresConfig }
+  | { kind: "axial-bar"; config: AxialBarConfig }
+  | { kind: "stress-element"; config: StressElementConfig }
+  | { kind: "strain-grid"; config: StrainGridConfig }
+  | { kind: "torsion-section"; config: TorsionSectionConfig }
+  | { kind: "beam-section"; config: BeamSectionConfig }
+  | { kind: "shear-moment"; config: ShearMomentConfig }
+  | { kind: "pressure-vessel"; config: PressureVesselConfig };
 
 /* ------------------------------------------------------------------ */
 /* Steps                                                               */

@@ -13,6 +13,13 @@ import { unit6 } from "./linear-algebra/unit6-vector-spaces";
 import { unit7 } from "./linear-algebra/unit7-eigenvalues";
 import { unit8 } from "./linear-algebra/unit8-orthogonality";
 import { unit9 } from "./linear-algebra/unit9-symmetric-svd";
+import { sm1 } from "./solid-mechanics/unit1-axial-bars";
+import { sm2 } from "./solid-mechanics/unit2-stress";
+import { sm3 } from "./solid-mechanics/unit3-strain";
+import { sm4 } from "./solid-mechanics/unit4-constitutive";
+import { sm5 } from "./solid-mechanics/unit5-basic-techniques";
+import { sm6 } from "./solid-mechanics/unit6-torsion";
+import { sm7 } from "./solid-mechanics/unit7-beams";
 
 export const course: Course = {
   id: "linear-algebra",
@@ -23,7 +30,16 @@ export const course: Course = {
   units: [unit1, unit2, unit3, unit4, unit5, unit6, unit7, unit8, unit9],
 };
 
-export const courses: Course[] = [course];
+export const solidMechanics: Course = {
+  id: "solid-mechanics",
+  title: "Solid Mechanics",
+  tagline: "Built for CE C30 / ME C85: kinematics, equilibrium, constitution — on every problem.",
+  description:
+    "A problem-first tour of the deformable-bodies half of Berkeley's Introduction to Solid Mechanics (Govindjee, Engineering Mechanics of Deformable Solids, chapters 2–8): axial bars, stress and strain as tensors, generalized Hooke's law, pressure vessels and Saint-Venant, torsion, and the bending of beams — in the order the lectures cover them. Every lesson starts with something you manipulate and ends with you doing the calculation.",
+  units: [sm1, sm2, sm3, sm4, sm5, sm6, sm7],
+};
+
+export const courses: Course[] = [course, solidMechanics];
 
 function lessonMeta(l: Lesson): LessonMeta {
   return {
