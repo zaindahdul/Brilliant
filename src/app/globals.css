@@ -1,0 +1,333 @@
+@import "tailwindcss";
+
+/* ---------- Design tokens (light) ---------- */
+:root {
+  --bg: #faf8f3;
+  --surface: #ffffff;
+  --surface-2: #f3f0e8;
+  --surface-3: #e9e5db;
+  --text: #17191e;
+  --muted: #676b76;
+  --border: #e6e1d6;
+  --border-strong: #cfc9bb;
+
+  --primary: #1e9e55;
+  --primary-hover: #178646;
+  --primary-ink: #0c4a26;
+  --primary-soft: #e3f5ea;
+
+  --danger: #c42d53;
+  --danger-ink: #8c1d3a;
+  --danger-soft: #fce4ea;
+
+  --gold: #f2b705;
+  --gold-ink: #7a5a00;
+  --gold-soft: #fff3c7;
+
+  --blue: #2f6fed;
+  --blue-soft: #e4ecfd;
+  --orange: #ef8a2e;
+  --orange-soft: #fdebd9;
+  --purple: #7a4dff;
+  --purple-soft: #ece6ff;
+  --teal: #0fa3a3;
+  --teal-soft: #dff5f5;
+
+  --ink-btn: #17191e;
+  --ink-btn-hover: #2a2d35;
+  --ring: rgba(47, 111, 237, 0.35);
+  --shadow-sm: 0 1px 2px rgba(20, 18, 10, 0.06);
+  --shadow-md: 0 6px 20px rgba(20, 18, 10, 0.08);
+  --canvas-grid: #e3dfd4;
+  --canvas-axis: #9a948a;
+  color-scheme: light;
+}
+
+/* ---------- Dark tokens ---------- */
+:root[data-theme="dark"] {
+  --bg: #0f1115;
+  --surface: #171a21;
+  --surface-2: #1f232c;
+  --surface-3: #2a2f3a;
+  --text: #eceef2;
+  --muted: #9aa0ac;
+  --border: #2a2f3a;
+  --border-strong: #3a4150;
+
+  --primary: #2ecc71;
+  --primary-hover: #3fd97f;
+  --primary-ink: #bff0d2;
+  --primary-soft: #16321f;
+
+  --danger: #ff5c7f;
+  --danger-ink: #ffc2d0;
+  --danger-soft: #3a1620;
+
+  --gold: #ffc531;
+  --gold-ink: #ffe9a8;
+  --gold-soft: #3b2f0a;
+
+  --blue: #5b8dff;
+  --blue-soft: #16233f;
+  --orange: #ff9c3f;
+  --orange-soft: #3a2410;
+  --purple: #a080ff;
+  --purple-soft: #261a4a;
+  --teal: #2fd1d1;
+  --teal-soft: #0d3131;
+
+  --ink-btn: #eceef2;
+  --ink-btn-hover: #ffffff;
+  --ring: rgba(91, 141, 255, 0.45);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.45);
+  --canvas-grid: #2a2f3a;
+  --canvas-axis: #6b7280;
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1115;
+    --surface: #171a21;
+    --surface-2: #1f232c;
+    --surface-3: #2a2f3a;
+    --text: #eceef2;
+    --muted: #9aa0ac;
+    --border: #2a2f3a;
+    --border-strong: #3a4150;
+    --primary: #2ecc71;
+    --primary-hover: #3fd97f;
+    --primary-ink: #bff0d2;
+    --primary-soft: #16321f;
+    --danger: #ff5c7f;
+    --danger-ink: #ffc2d0;
+    --danger-soft: #3a1620;
+    --gold: #ffc531;
+    --gold-ink: #ffe9a8;
+    --gold-soft: #3b2f0a;
+    --blue: #5b8dff;
+    --blue-soft: #16233f;
+    --orange: #ff9c3f;
+    --orange-soft: #3a2410;
+    --purple: #a080ff;
+    --purple-soft: #261a4a;
+    --teal: #2fd1d1;
+    --teal-soft: #0d3131;
+    --ink-btn: #eceef2;
+    --ink-btn-hover: #ffffff;
+    --ring: rgba(91, 141, 255, 0.45);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.45);
+    --canvas-grid: #2a2f3a;
+    --canvas-axis: #6b7280;
+    color-scheme: dark;
+  }
+}
+
+/* ---------- Tailwind theme mapping ---------- */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-ink: var(--primary-ink);
+  --color-primary-soft: var(--primary-soft);
+  --color-danger: var(--danger);
+  --color-danger-ink: var(--danger-ink);
+  --color-danger-soft: var(--danger-soft);
+  --color-gold: var(--gold);
+  --color-gold-ink: var(--gold-ink);
+  --color-gold-soft: var(--gold-soft);
+  --color-blue: var(--blue);
+  --color-blue-soft: var(--blue-soft);
+  --color-orange: var(--orange);
+  --color-orange-soft: var(--orange-soft);
+  --color-purple: var(--purple);
+  --color-purple-soft: var(--purple-soft);
+  --color-teal: var(--teal);
+  --color-teal-soft: var(--teal-soft);
+  --color-ink-btn: var(--ink-btn);
+  --color-ink-btn-hover: var(--ink-btn-hover);
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+
+  --radius-xl: 1.125rem;
+  --radius-2xl: 1.5rem;
+}
+
+/* ---------- Base ---------- */
+html {
+  background: var(--bg);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+.font-serif {
+  font-family: var(--font-serif);
+  font-variation-settings: "opsz" 48, "SOFT" 30;
+}
+
+::selection {
+  background: var(--gold-soft);
+}
+
+:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+/* Small-caps metadata labels, like Brilliant's "PROBLEM 1 OF 15" */
+.eyebrow {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* 3D "ledge" buttons */
+.ledge {
+  box-shadow: 0 4px 0 0 var(--ledge, rgba(0, 0, 0, 0.25));
+  transform: translateY(0);
+  transition:
+    transform 0.08s ease,
+    box-shadow 0.08s ease,
+    background-color 0.15s ease;
+}
+.ledge:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 0 var(--ledge, rgba(0, 0, 0, 0.25));
+}
+
+/* Feedback panel slide-up */
+@keyframes slide-up {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.slide-up {
+  animation: slide-up 0.22s ease-out both;
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(242, 183, 5, 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 14px rgba(242, 183, 5, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(242, 183, 5, 0);
+  }
+}
+.pulse-ring {
+  animation: pulse-ring 1.8s ease-out infinite;
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+.bob {
+  animation: bob 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slide-up,
+  .pulse-ring,
+  .bob {
+    animation: none !important;
+  }
+  * {
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* KaTeX sizing inside prose */
+.rich .katex {
+  font-size: 1.06em;
+}
+.rich .katex-display {
+  margin: 0.6rem 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.15rem 0;
+}
+.rich p + p,
+.rich p + ul,
+.rich ul + p,
+.rich .katex-display + p {
+  margin-top: 0.75rem;
+}
+.rich ul {
+  list-style: disc;
+  padding-left: 1.4rem;
+}
+.rich ol {
+  list-style: decimal;
+  padding-left: 1.4rem;
+}
+.rich li + li {
+  margin-top: 0.25rem;
+}
+.rich code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 0.35rem;
+  padding: 0.05rem 0.35rem;
+}
+.rich .callout {
+  border-left: 3px solid var(--gold);
+  background: var(--gold-soft);
+  padding: 0.6rem 0.9rem;
+  border-radius: 0.5rem;
+  margin: 0.75rem 0;
+}
+.rich h3 {
+  font-size: 1.15rem;
+  margin: 1rem 0 0.35rem;
+}
+
+/* Scrollbar niceties */
+.thin-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.thin-scroll::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 8px;
+}
