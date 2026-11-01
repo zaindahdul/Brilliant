@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Flame, Home, Map as MapIcon, RotateCcw, Settings, Sparkles } from "lucide-react";
+import { BookOpen, Flame, Home, Map as MapIcon, RotateCcw, Settings, Sparkles } from "lucide-react";
 import { useProgressStore } from "@/lib/progress/store";
 import { dueProblems, getStreakStatus } from "@/lib/progress/logic";
 import { useClock } from "@/lib/useClock";
@@ -12,6 +12,7 @@ const links = [
   { href: "/", label: "Home", icon: Home },
   { href: "/course/linear-algebra", label: "Course", icon: MapIcon },
   { href: "/review", label: "Review", icon: RotateCcw },
+  { href: "/homework", label: "Homework", icon: BookOpen },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

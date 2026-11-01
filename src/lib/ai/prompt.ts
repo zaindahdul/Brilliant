@@ -10,7 +10,7 @@ export const TutorContextSchema = z.object({
   unitTitle: z.string().max(200),
   lessonTitle: z.string().max(200),
   stepId: z.string().max(200),
-  stepType: z.enum(["reading", "mc", "multi", "numeric", "matrix", "order", "goal"]),
+  stepType: z.enum(["reading", "mc", "multi", "numeric", "matrix", "order", "goal", "homework"]),
   body: z.string().max(8000),
   question: z.string().max(4000).optional(),
   choices: z.array(z.object({ id: z.string(), text: z.string().max(1000) })).max(12).optional(),
@@ -21,7 +21,7 @@ export const TutorContextSchema = z.object({
   resolved: z.boolean(),
   /** 1 = gentle, 2 = more specific, 3 = walk through the method (still no final answer). */
   nudgeLevel: z.number().int().min(1).max(3),
-  mode: z.enum(["stuck", "debrief", "practice"]),
+  mode: z.enum(["stuck", "debrief", "practice", "homework"]),
 });
 
 export type TutorContext = z.infer<typeof TutorContextSchema>;
@@ -33,7 +33,11 @@ export function buildInstructions(ctx: TutorContext): string {
 
   const choices = ctx.choices?.length ? ctx.choices.map((c) => `  - [${c.id}] ${c.text}`).join("\n") : null;
 
-  const policy = ctx.resolved
+  const policy = ctx.mode === "homework"
+    ? ctx.resolved
+      ? `MODE: HOMEWORK CHECK. The learner says they have finished this homework problem and wants their work checked, the way a human tutor in office hours would. They will paste or describe their solution. Verify it step by step: confirm the steps that are right, and for anything wrong or missing, point to the exact step and ask a question that leads them to fix it themselves. Do not rewrite the solution for them. If their final answer is wrong, say so, locate the first error, and stop there. If everything is right, say so and ask one quick variation question to test that it wasn't luck.`
+      : `MODE: HOMEWORK. This is one of the learner's assigned textbook problems. There is NO author-provided answer here: before you reply, work the problem yourself silently so your nudges are accurate — but your reply must contain only the nudge. The learner will submit this work to their class, so handing them the solution would defeat the purpose and they have asked you not to. Ask what they've tried. Point to the relevant definition or theorem by name. Help them set up the first step, then stop. If they ask for the answer, warmly decline and offer a smaller step. If they propose an answer, don't grade it — ask them to justify it; they can switch to "check my work" when they're done.`
+    : ctx.resolved
     ? `MODE: DEBRIEF. The learner has finished this step (they either answered correctly or the answer was shown). The answer is no longer secret, so you may discuss it fully — but your job is to make sure they actually understand it:
 - Start by asking the learner to explain in their own words *why* the answer is what it is, or to predict what would change if one detail of the problem changed.
 - When they give an explanation, evaluate it honestly: point to the exact gap or misconception with a question, confirm what's right, and fix what's wrong.
@@ -69,6 +73,7 @@ STYLE:
 ${policy}
 
 ${ctx.resolved ? "" : levelGuide}
+${ctx.mode === "homework" ? `The problem text below was typed by the learner from their textbook; it may contain typos — if something seems off, ask rather than assume.` : ""}
 
 CONTEXT
 Course: ${ctx.courseTitle} › ${ctx.unitTitle} › ${ctx.lessonTitle}

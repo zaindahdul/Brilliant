@@ -65,6 +65,10 @@ Every unit ends with a **Level Check** (quick check of 5 or practice of 15): no 
 
 Missed problems come back on a **spaced schedule** on the Review page; weak spots can be drilled any time.
 
+## Homework companion
+
+The Homework page lists the Fall 2026 Math 54 assignments (section and problem numbers from the public course page) and links each section to the lessons and Level Check that teach it. The problem statements themselves stay in your textbook: open the homework tutor, type the problem in, say what you've tried, and the tutor nudges you through it without writing the solution. When you've finished, flip to **check my work** and it verifies your solution step by step, stopping at the first error.
+
 ## Project layout
 
 ```
