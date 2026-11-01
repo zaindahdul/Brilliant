@@ -145,7 +145,7 @@ export function TutorChat({ chatId, context, nudgeRequest = 0, intro, className,
               );
             })}
             {chatStatus === "submitted" && <div className="justify-self-start rounded-2xl bg-surface-2 px-3.5 py-2.5 text-sm text-muted">thinking…</div>}
-            {error && <div className="rounded-2xl bg-danger-soft px-3.5 py-2.5 text-sm text-danger-ink">Something went wrong talking to the tutor. Try again.</div>}
+            {error && <div className="rounded-2xl bg-danger-soft px-3.5 py-2.5 text-sm text-danger-ink">{error.message?.trim() || "Something went wrong talking to the tutor. Try again."}</div>}
           </div>
         )}
       </div>

@@ -8,22 +8,23 @@ Built after a close study of how Brilliant teaches (single-focus step player, tw
 
 ```bash
 npm install
-cp .env.example .env.local   # add ONE provider key (see below) — optional
+cp .env.example .env.local   # paste your Gemini key (see below) — optional
 npm run dev                  # http://localhost:3000
 ```
 
 Progress is saved automatically in your browser **and** to `data/progress.json` on disk (debounced, plus a beacon when you close the tab), so quitting mid-lesson is fine — you resume at the same step.
 
-### AI tutor keys (`.env.local`)
+### AI tutor key (`.env.local`)
 
-| Variable | Provider | Default model |
+The tutor runs on **Google Gemini**. Create a key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey) (the free tier covers the Flash models) and put it in `.env.local`:
+
+| Variable | Required | Meaning |
 | --- | --- | --- |
-| `XAI_API_KEY` | xAI Grok | `grok-4-1-fast-reasoning` |
-| `GROQ_API_KEY` | Groq (free tier) | `openai/gpt-oss-120b` |
-| `OPENAI_COMPATIBLE_BASE_URL` + `OPENAI_COMPATIBLE_API_KEY` + `AI_MODEL` | any OpenAI-compatible API (Ollama, OpenRouter, …) | — |
-| `AI_GATEWAY_API_KEY` + `AI_MODEL=provider/model` | Vercel AI Gateway | — |
+| `GEMINI_API_KEY` | yes, for the tutor | your Gemini API key (`GOOGLE_GENERATIVE_AI_API_KEY` works too) |
+| `AI_MODEL` | no | Gemini model id, default `gemini-3.8-flash`; try `gemini-3.5-flash-lite` if you hit rate limits |
+| `AI_THINKING_LEVEL` | no | `minimal` / `low` / `medium` (default) / `high` — how hard the model thinks before each nudge |
 
-`AI_MODEL` overrides the model for any provider. Without a key everything still works — the hand-written hints after a miss don't need AI.
+Without a key everything still works — the hand-written hints after a miss don't need AI.
 
 ### Scripts
 
