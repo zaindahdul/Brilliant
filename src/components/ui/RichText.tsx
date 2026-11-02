@@ -38,7 +38,7 @@ function Inlines({ nodes }: { nodes: Inline[] }) {
           case "code":
             return <code key={i}>{n.v}</code>;
           case "math":
-            return <Math key={i} tex={n.v} />;
+            return <Math key={i} tex={n.v} display={n.display} />;
           case "br":
             return <br key={i} />;
         }

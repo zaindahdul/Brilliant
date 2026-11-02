@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Sparkles, Volume2, VolumeX } from "lucide-react";
 import type { Lesson, Step } from "@/content/types";
+import { withLessonContext } from "@/content/context";
 import { isQuestion } from "@/content/types";
 import { checkAnswer, formatAnswer, isAnswerEmpty, type AnswerValue } from "@/lib/check";
 import { toPlainText } from "@/lib/markdown";
@@ -226,7 +227,7 @@ function LessonPlayerInner({ lesson, unit, course, next }: Props) {
       lessonTitle: lesson.title,
       stepId: step.id,
       stepType: step.type,
-      body: toPlainText(step.body),
+      body: toPlainText(q ? withLessonContext(lesson, q).body : step.body),
       question: q ? toPlainText(q.question) : undefined,
       choices: q && (q.type === "mc" || q.type === "multi") ? q.choices.map((c) => ({ id: c.id, text: toPlainText(c.text) })) : undefined,
       correctAnswer: q ? plainCorrectAnswer(q) : undefined,
@@ -237,7 +238,7 @@ function LessonPlayerInner({ lesson, unit, course, next }: Props) {
       nudgeLevel: 1,
       mode: resolved ? "debrief" : "stuck",
     };
-  }, [step, st, lessonProgress, course.id, course.title, unit.title, lesson.title]);
+  }, [step, st, lessonProgress, course.id, course.title, unit.title, lesson]);
 
   const exit = () => router.push(`/course/${course.id}`);
 

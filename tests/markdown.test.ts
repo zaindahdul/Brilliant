@@ -31,6 +31,16 @@ More`;
     const blocks = parseBlocks(src);
     expect(blocks[1].t).toBe("math");
   });
+  it("treats $$…$$ written inside a paragraph as display math", () => {
+    const nodes = parseInline(String.raw`Solve $$\begin{aligned} x + y &= 1 \\ x - y &= 3 \end{aligned}$$ for $x$.`);
+    expect(nodes.map((n) => n.t)).toEqual(["text", "math", "text", "math", "text"]);
+    expect(nodes[1]).toEqual({ t: "math", v: String.raw`\begin{aligned} x + y &= 1 \\ x - y &= 3 \end{aligned}`, display: true });
+    expect(nodes[3]).toEqual({ t: "math", v: "x" });
+    // and it still parses as one paragraph block
+    expect(parseBlocks("Two parameters: $$a = b$$ here").map((b) => b.t)).toEqual(["p"]);
+    // an unclosed $$ does not swallow the rest of the text
+    expect(parseInline("costs $$5").filter((n) => n.t === "text").length).toBeGreaterThan(0);
+  });
   it("strips formatting for plain text", () => {
     expect(toPlainText("**Bold** and $x^2$ and `code`")).toBe("Bold and x^2 and code");
   });

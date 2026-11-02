@@ -1,5 +1,6 @@
 import { connection } from "next/server";
 import { courses } from "@/content/course";
+import { withLessonContext } from "@/content/context";
 import { isQuestion, type QuestionStep } from "@/content/types";
 
 /**
@@ -39,7 +40,8 @@ export async function GET(req: Request) {
       for (const u of c.units) {
         const l = u.lessons.find((x) => x.id === lessonId);
         const step = l?.steps.find((s) => s.id === stepId);
-        if (l && step && isQuestion(step)) problems[key] = { unitId: u.id, lessonId: l.id, step: { ...step, id: key } };
+        // A follow-up question ("same shaft…") gets the setup it refers to folded into its body.
+        if (l && step && isQuestion(step)) problems[key] = { unitId: u.id, lessonId: l.id, step: { ...withLessonContext(l, step), id: key } };
       }
     }
   }

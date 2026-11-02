@@ -8,7 +8,8 @@ export type Inline =
   | { t: "bold"; c: Inline[] }
   | { t: "italic"; c: Inline[] }
   | { t: "code"; v: string }
-  | { t: "math"; v: string }
+  /** `display` is set for `$$…$$` written inside a paragraph (rendered as display math). */
+  | { t: "math"; v: string; display?: boolean }
   | { t: "br" };
 
 export type Block =
@@ -38,6 +39,17 @@ export function parseInline(src: string): Inline[] {
       buf += src[i + 1];
       i += 2;
       continue;
+    }
+
+    // display math written inline: $$...$$ (authors do this for aligned systems mid-paragraph)
+    if (ch === "$" && src[i + 1] === "$") {
+      const end = findClosingDoubleDollar(src, i + 2);
+      if (end !== -1) {
+        flush();
+        out.push({ t: "math", v: src.slice(i + 2, end).trim(), display: true });
+        i = end + 2;
+        continue;
+      }
     }
 
     // inline math $...$
@@ -110,9 +122,27 @@ function findClosingDollar(src: string, from: number): number {
   return -1;
 }
 
+function findClosingDoubleDollar(src: string, from: number): number {
+  for (let j = from; j < src.length - 1; j++) {
+    if (src[j] === "\\") {
+      j += 1;
+      continue;
+    }
+    if (src[j] === "$" && src[j + 1] === "$") return j;
+  }
+  return -1;
+}
+
 function findClosing(src: string, from: number, marker: string): number {
   let j = from;
   while (j < src.length) {
+    if (src[j] === "$" && src[j + 1] === "$") {
+      const end = findClosingDoubleDollar(src, j + 2);
+      if (end !== -1) {
+        j = end + 2;
+        continue;
+      }
+    }
     if (src[j] === "$") {
       const end = findClosingDollar(src, j + 1);
       if (end !== -1) {
