@@ -6,7 +6,7 @@ export async function GET() {
   const tutor = getTutorModel();
   return Response.json(
     tutor
-      ? { configured: true, provider: tutor.provider, model: tutor.modelId, thinkingLevel: tutor.thinkingLevel ?? null }
+      ? { configured: true, provider: tutor.provider, model: tutor.modelId, effort: tutor.effort }
       : { configured: false, help: describeSetup() },
     { headers: { "cache-control": "no-store" } },
   );

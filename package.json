@@ -12,7 +12,7 @@
     "check": "npm run typecheck && npm run lint && npm run test"
   },
   "dependencies": {
-    "@ai-sdk/google": "^4.0.109",
+    "@ai-sdk/anthropic": "^4.0.94",
     "@ai-sdk/react": "^4.0.163",
     "ai": "^7.0.159",
     "clsx": "^2.1.1",

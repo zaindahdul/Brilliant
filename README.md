@@ -8,7 +8,7 @@ Built after a close study of how Brilliant teaches (single-focus step player, tw
 
 ```bash
 npm install
-cp .env.example .env.local   # paste your Gemini key (see below) — optional
+cp .env.example .env.local   # paste your Anthropic key (see below) — optional
 npm run dev                  # http://localhost:3000
 ```
 
@@ -16,13 +16,15 @@ Progress is saved automatically in your browser **and** to `data/progress.json` 
 
 ### AI tutor key (`.env.local`)
 
-The tutor runs on **Google Gemini**. Create a key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey) (the free tier covers the Flash models) and put it in `.env.local`:
+The tutor runs on **Claude** through the Anthropic API (the AI SDK's `@ai-sdk/anthropic` provider). Create a key in the [Claude Developer Platform console](https://platform.claude.com) and put it in `.env.local` (gitignored — never commit it):
 
 | Variable | Required | Meaning |
 | --- | --- | --- |
-| `GEMINI_API_KEY` | yes, for the tutor | your Gemini API key (`GOOGLE_GENERATIVE_AI_API_KEY` works too) |
-| `AI_MODEL` | no | Gemini model id, default `gemini-3.8-flash`; try `gemini-3.5-flash-lite` if you hit rate limits |
-| `AI_THINKING_LEVEL` | no | `minimal` / `low` / `medium` (default) / `high` — how hard the model thinks before each nudge |
+| `ANTHROPIC_API_KEY` | yes, for the tutor | your Anthropic API key |
+| `AI_MODEL` | no | Claude model id, default `claude-opus-5-5`; `claude-sonnet-5-5` is faster and cheaper, `claude-haiku-5-5` the lightest |
+| `AI_EFFORT` | no | `low` / `medium` (default) / `high` / `xhigh` / `max` — how hard the model thinks before each nudge |
+
+Current Claude models think adaptively on every reply; `AI_EFFORT` is the only depth control. If a safety classifier declines a turn, the request falls back server-side to another Claude model rather than returning nothing.
 
 Without a key everything still works — the hand-written hints after a miss don't need AI.
 

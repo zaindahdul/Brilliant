@@ -119,7 +119,7 @@ export function SettingsPanel() {
           </div>
         )}
         <p className="text-sm text-muted">
-          The tutor receives the current step, your attempts, and (privately) the answer so it can diagnose — its instructions forbid revealing it. Change the model with <code>AI_MODEL</code> in <code>.env.local</code>.
+          The tutor receives the current step, your attempts, and (privately) the answer so it can diagnose — its instructions forbid revealing it. Change the model with <code>AI_MODEL</code> and how hard it thinks with <code>AI_EFFORT</code> in <code>.env.local</code>.
         </p>
       </Card>
 

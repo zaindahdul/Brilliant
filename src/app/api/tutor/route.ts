@@ -1,5 +1,5 @@
 import { APICallError, convertToModelMessages, createUIMessageStreamResponse, streamText, toUIMessageStream, type UIMessage } from "ai";
-import type { GoogleLanguageModelOptions } from "@ai-sdk/google";
+import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { buildInstructions, TutorContextSchema } from "@/lib/ai/prompt";
 import { describeSetup, getTutorModel } from "@/lib/ai/provider";
@@ -10,14 +10,13 @@ export const maxDuration = 60;
 function describeStreamError(error: unknown, modelId: string): string {
   if (APICallError.isInstance(error)) {
     const status = error.statusCode ?? 0;
-    if (status === 400 && /api key/i.test(error.message)) {
-      return "Gemini rejected the API key. Check GEMINI_API_KEY in .env.local and restart `npm run dev`.";
-    }
-    if (status === 404) return `Gemini model "${modelId}" was not found. Check AI_MODEL in .env.local.`;
-    if (status === 403) return "Gemini refused the request (403) — this key may not have access to the chosen model.";
-    if (status === 429) return "Gemini rate limit reached. Wait a minute and try again, or set AI_MODEL=gemini-3.5-flash-lite.";
-    if (status >= 500) return "Gemini is having trouble right now. Try again in a moment.";
-    return `Gemini error: ${error.message}`;
+    if (status === 401) return "Anthropic rejected the API key. Check ANTHROPIC_API_KEY in .env.local and restart `npm run dev`.";
+    if (status === 403) return "Anthropic refused the request (403) — this key may not have access to the chosen model.";
+    if (status === 404) return `Claude model "${modelId}" was not found. Check AI_MODEL in .env.local.`;
+    if (status === 429) return "Anthropic rate limit reached. Wait a minute and try again, or set AI_MODEL=claude-sonnet-5-5.";
+    if (status === 529 || status >= 500) return "Anthropic is overloaded right now. Try again in a moment.";
+    // 400s carry the API's own explanation (credit balance, an option the model rejects, …).
+    return `Anthropic rejected the request: ${error.message}`;
   }
   return error instanceof Error ? `Tutor error: ${error.message}` : "The tutor hit an unexpected error.";
 }
@@ -52,19 +51,20 @@ export async function POST(req: Request) {
     model: tutor.model,
     instructions: buildInstructions(context),
     messages: await convertToModelMessages(recent),
-    // Gemini 3 is tuned for its default temperature (1.0); Google warns that lowering it can cause
-    // looping, so it is left alone. Thinking tokens count against the output cap, so the cap leaves
-    // room for them — the instructions keep the visible reply short.
-    maxOutputTokens: 6000,
-    ...(tutor.thinkingLevel
-      ? {
-          providerOptions: {
-            google: {
-              thinkingConfig: { thinkingLevel: tutor.thinkingLevel, includeThoughts: false },
-            } satisfies GoogleLanguageModelOptions,
-          },
-        }
-      : {}),
+    // Claude thinks before every reply and those tokens count against the output cap, so the cap
+    // leaves room for them — the instructions keep the visible nudge short. No sampling parameters:
+    // current Claude models reject temperature / top_p / top_k.
+    maxOutputTokens: 16000,
+    providerOptions: {
+      anthropic: {
+        thinking: { type: "adaptive" },
+        effort: tutor.effort,
+        // If a safety classifier declines a turn, Anthropic re-runs it on a fallback model inside the
+        // same request instead of handing the learner an empty reply.
+        fallbacks: "default",
+        anthropicBeta: ["server-side-fallback-2026-07-01"],
+      } satisfies AnthropicProviderOptions,
+    },
   });
 
   return createUIMessageStreamResponse({
