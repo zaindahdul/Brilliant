@@ -24,6 +24,8 @@ export interface PracticeProblem {
   key: string;
   unitId: string;
   lessonId?: string;
+  /** The problem's own course, for sets that mix courses (review); the tutor falls back to `course.id`. */
+  courseId?: string;
   step: QuestionStep;
 }
 
@@ -194,6 +196,7 @@ export function PracticePlayer({ unit, course, problems, generatorIds, fixed, mo
     for (const id of st.wrongChoiceIds) if (st.phase === "answering") attempts.push({ answer: toPlainText((q.type === "mc" || q.type === "multi" ? q.choices.find((c) => c.id === id)?.text : id) ?? id), correct: false });
     const resolved = st.phase === "correct" || st.phase === "revealed";
     return {
+      courseId: current!.courseId ?? course.id,
       courseTitle: course.title,
       unitTitle: unit.title,
       lessonTitle: mode === "review" ? "Review session" : "Level Check",
@@ -210,7 +213,7 @@ export function PracticePlayer({ unit, course, problems, generatorIds, fixed, mo
       nudgeLevel: 1,
       mode: resolved ? "debrief" : "practice",
     };
-  }, [q, st, current, course.title, unit.title, mode]);
+  }, [q, st, current, course.id, course.title, unit.title, mode]);
 
   if (!hydrated) return <div className="flex min-h-dvh items-center justify-center text-muted">Loading…</div>;
 

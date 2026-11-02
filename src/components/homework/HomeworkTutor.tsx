@@ -5,34 +5,73 @@ import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeft, CheckCircle2, Pencil, Sparkles } from "lucide-react";
 import type { TutorContext } from "@/lib/ai/prompt";
-import { homeworkSets, sectionLessons } from "@/content/homework";
+import { defaultHomeworkCourseId, getHomeworkCourse, homeworkCourses, homeworkTitle, lessonsForSection, prettyLessonId, sectionLabel, type HomeworkCourse, type HomeworkSet } from "@/content/homework";
+import { useClock } from "@/lib/useClock";
 import { Button } from "@/components/ui/Button";
 import { Card, Eyebrow } from "@/components/ui/Card";
 import { RichText } from "@/components/ui/RichText";
 import { TutorChat } from "@/components/tutor/TutorChat";
 import { cn } from "@/lib/cn";
 
-const sections = Array.from(new Set(homeworkSets.flatMap((h) => h.sections.filter((s) => s.book === "lay").map((s) => s.section))));
+/** Sections the tutor takes problems from: the class's own textbook (Math 54's ODE sections are left out). */
+function tutorSections(hc: HomeworkCourse): string[] {
+  return Array.from(new Set(hc.sets.flatMap((h) => h.sections.filter((s) => s.book === hc.book).map((s) => s.section))));
+}
 
-export function HomeworkTutor() {
+/** The class a link asks for: `?course=`, else whichever class assigns `?section=` (links from before there were two). */
+function courseFromParams(course: string | null, section: string | null): string | null {
+  if (getHomeworkCourse(course)) return course;
+  if (section === null) return null;
+  return homeworkCourses.find((hc) => tutorSections(hc).includes(section))?.courseId ?? null;
+}
+
+/** The set a problem belongs to: the one the link named (`?hw=` id, or number in older links) if it assigns the section, else the first that does. */
+function findSet(hc: HomeworkCourse, section: string, hw: string | null): HomeworkSet | undefined {
+  const assigns = (h: HomeworkSet) => h.sections.some((s) => s.section === section);
+  return hc.sets.find((h) => (h.id === hw || (h.number !== undefined && String(h.number) === hw)) && assigns(h)) ?? hc.sets.find(assigns);
+}
+
+const examples: Record<string, { number: string; problem: string; tried: string }> = {
+  "linear-algebra": {
+    number: "e.g. 21",
+    problem: "e.g. Determine whether the vectors (1, 2, 3), (0, 1, 1) and (1, 3, 4) are linearly independent. Use $...$ for math if you like.",
+    tried: "I set up the matrix and row reduced, but I got a row of zeros and I'm not sure what that means…",
+  },
+  "solid-mechanics": {
+    number: "e.g. 2.9",
+    problem: "e.g. A steel bar (E = 200 GPa, A = 100 mm²) is built in at both ends and carries a 10 kN axial load at its midpoint. Find the support reactions. Use $...$ for math if you like.",
+    tried: "I drew the free-body diagram and wrote equilibrium, but there are two unknown reactions and only one equation…",
+  },
+};
+
+export function HomeworkTutor({ lessonTitles = {} }: { lessonTitles?: Record<string, string> }) {
   const params = useSearchParams();
-  const [section, setSection] = useState(params.get("section") ?? "");
+  const clock = useClock();
+  // Until the learner picks a class (or a link names one), use the one with the nearest deadline.
+  const [pickedCourse, setPickedCourse] = useState(() => courseFromParams(params.get("course"), params.get("section")));
+  const hc = getHomeworkCourse(pickedCourse ?? defaultHomeworkCourseId(clock.today ?? "")) ?? homeworkCourses[0];
+  const sections = tutorSections(hc);
+  const [sectionPick, setSection] = useState(params.get("section") ?? "");
+  const section = sections.includes(sectionPick) ? sectionPick : "";
   const [problemNo, setProblemNo] = useState(params.get("problem") ?? "");
   const [text, setText] = useState("");
   const [tried, setTried] = useState("");
-  const [started, setStarted] = useState<{ text: string; tried: string; section: string; problemNo: string } | null>(null);
+  const [started, setStarted] = useState<{ courseId: string; hw: string | null; text: string; tried: string; section: string; problemNo: string } | null>(null);
   const [resolved, setResolved] = useState(false);
   const [session, setSession] = useState(0);
-
-  const hwNumber = useMemo(() => homeworkSets.find((h) => h.sections.some((s) => s.section === (started?.section ?? section)))?.number, [started, section]);
+  const hwParam = params.get("hw");
+  const example = examples[hc.courseId] ?? examples["linear-algebra"];
 
   const context: TutorContext | null = useMemo(() => {
     if (!started) return null;
+    const course = getHomeworkCourse(started.courseId) ?? homeworkCourses[0];
+    const set = findSet(course, started.section, started.hw);
     return {
-      courseTitle: "Linear Algebra (Math 54)",
-      unitTitle: hwNumber ? `Homework ${hwNumber}` : "Homework",
-      lessonTitle: started.section ? `Lay §${started.section}${started.problemNo ? ` #${started.problemNo}` : ""}` : "Textbook problem",
-      stepId: `hw:${started.section || "x"}:${started.problemNo || "x"}:${session}`,
+      courseId: course.courseId,
+      courseTitle: course.tutorTitle,
+      unitTitle: set ? homeworkTitle(set) : "Homework",
+      lessonTitle: started.section ? `${course.bookLabel} ${sectionLabel(started.section)}${started.problemNo ? ` #${started.problemNo}` : ""}` : "Textbook problem",
+      stepId: `hw:${course.courseId}:${started.section || "x"}:${started.problemNo || "x"}:${session}`,
       stepType: "homework",
       body: started.text,
       question: undefined,
@@ -41,9 +80,9 @@ export function HomeworkTutor() {
       nudgeLevel: 1,
       mode: "homework",
     };
-  }, [started, resolved, hwNumber, session]);
+  }, [started, resolved, session]);
 
-  const lessons = sectionLessons[started?.section ?? section] ?? [];
+  const lessons = started ? lessonsForSection(started.section, (getHomeworkCourse(started.courseId) ?? hc).sectionLessons) : lessonsForSection(section, hc.sectionLessons);
 
   if (!started) {
     return (
@@ -59,21 +98,45 @@ export function HomeworkTutor() {
           </p>
         </div>
         <Card className="grid gap-4 p-5">
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <label className="grid gap-1 text-sm">
+              <span className="font-medium">Class</span>
+              <select
+                value={hc.courseId}
+                onChange={(e) => {
+                  setPickedCourse(e.target.value);
+                  setSection("");
+                }}
+                className="h-10 rounded-xl border border-border-strong bg-surface px-3"
+              >
+                {homeworkCourses.map((c) => (
+                  <option key={c.courseId} value={c.courseId}>
+                    {c.title}
+                  </option>
+                ))}
+              </select>
+            </label>
             <label className="grid gap-1 text-sm">
               <span className="font-medium">Section</span>
-              <select value={section} onChange={(e) => setSection(e.target.value)} className="h-10 rounded-xl border border-border-strong bg-surface px-3">
+              <select
+                value={section}
+                onChange={(e) => {
+                  setSection(e.target.value);
+                  setPickedCourse(hc.courseId);
+                }}
+                className="h-10 rounded-xl border border-border-strong bg-surface px-3"
+              >
                 <option value="">— pick a section —</option>
                 {sections.map((s) => (
                   <option key={s} value={s}>
-                    §{s}
+                    {sectionLabel(s)}
                   </option>
                 ))}
               </select>
             </label>
             <label className="grid gap-1 text-sm">
               <span className="font-medium">Problem number (optional)</span>
-              <input value={problemNo} onChange={(e) => setProblemNo(e.target.value)} placeholder="e.g. 21" className="h-10 rounded-xl border border-border-strong bg-surface px-3 focus:border-blue focus:outline-none" />
+              <input value={problemNo} onChange={(e) => setProblemNo(e.target.value)} maxLength={24} placeholder={example.number} className="h-10 rounded-xl border border-border-strong bg-surface px-3 focus:border-blue focus:outline-none" />
             </label>
           </div>
           <label className="grid gap-1 text-sm">
@@ -82,13 +145,14 @@ export function HomeworkTutor() {
               value={text}
               onChange={(e) => setText(e.target.value)}
               rows={6}
-              placeholder={"e.g. Determine whether the vectors (1, 2, 3), (0, 1, 1) and (1, 3, 4) are linearly independent. Use $...$ for math if you like."}
+              maxLength={8000}
+              placeholder={example.problem}
               className="thin-scroll resize-y rounded-xl border border-border-strong bg-surface px-3 py-2 focus:border-blue focus:outline-none"
             />
           </label>
           <label className="grid gap-1 text-sm">
             <span className="font-medium">What you&apos;ve tried so far (optional, but this is where the good nudges come from)</span>
-            <textarea value={tried} onChange={(e) => setTried(e.target.value)} rows={3} placeholder="I set up the matrix and row reduced, but I got a row of zeros and I'm not sure what that means…" className="thin-scroll resize-y rounded-xl border border-border-strong bg-surface px-3 py-2 focus:border-blue focus:outline-none" />
+            <textarea value={tried} onChange={(e) => setTried(e.target.value)} rows={3} placeholder={example.tried} className="thin-scroll resize-y rounded-xl border border-border-strong bg-surface px-3 py-2 focus:border-blue focus:outline-none" />
           </label>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs text-muted">Problem text is sent only to the AI provider you configured, together with the tutor instructions.</p>
@@ -99,7 +163,7 @@ export function HomeworkTutor() {
               onClick={() => {
                 setResolved(false);
                 setSession((s) => s + 1);
-                setStarted({ text: text.trim(), tried, section, problemNo });
+                setStarted({ courseId: hc.courseId, hw: hwParam, text: text.trim(), tried, section, problemNo: problemNo.trim().slice(0, 24) });
               }}
             >
               <Sparkles size={16} /> Start with a nudge
@@ -108,11 +172,11 @@ export function HomeworkTutor() {
         </Card>
         {lessons.length > 0 && (
           <Card className="p-4 text-sm">
-            <Eyebrow>Lessons for §{section}</Eyebrow>
+            <Eyebrow>Lessons for {sectionLabel(section)}</Eyebrow>
             <div className="mt-2 flex flex-wrap gap-2">
               {lessons.map((id) => (
                 <Link key={id} href={`/lesson/${id}`} className="rounded-full border border-border px-2.5 py-0.5 hover:border-border-strong">
-                  {id.replace(/^u\d+-l\d+-/, "").replace(/-/g, " ")}
+                  {lessonTitles[id] ?? prettyLessonId(id)}
                 </Link>
               ))}
             </div>
@@ -158,7 +222,7 @@ export function HomeworkTutor() {
             <div className="mt-2 flex flex-wrap gap-2">
               {lessons.map((id) => (
                 <Link key={id} href={`/lesson/${id}`} className="rounded-full border border-border px-2.5 py-0.5 hover:border-border-strong">
-                  {id.replace(/^u\d+-l\d+-/, "").replace(/-/g, " ")}
+                  {lessonTitles[id] ?? prettyLessonId(id)}
                 </Link>
               ))}
             </div>

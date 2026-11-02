@@ -276,8 +276,16 @@ export function formatAnswer(step: QuestionStep): { kind: "text" | "math"; value
     case "multi": {
       return { kind: "text", value: step.correct.map((id) => step.choices.find((c) => c.id === id)?.text ?? "").join(" · ") };
     }
-    case "numeric":
-      return { kind: "math", value: step.answerDisplay ?? formatNumberForTex(step.answer) };
+    case "numeric": {
+      if (step.answerDisplay) return { kind: "math", value: step.answerDisplay };
+      // Engineering answers (any step that sets an explicit tolerance) are shown as decimals with their
+      // unit; exact linear-algebra answers keep the fraction form.
+      if (step.tolerance !== undefined) {
+        const unit = step.suffix && !/[$\\{}]/.test(step.suffix) ? String.raw`\;\text{` + step.suffix.replace(/[%#&_]/g, (c) => "\\" + c) + "}" : "";
+        return { kind: "math", value: formatDecimalForTex(step.answer) + unit };
+      }
+      return { kind: "math", value: formatNumberForTex(step.answer) };
+    }
     case "matrix":
       return {
         kind: "math",
@@ -288,6 +296,13 @@ export function formatAnswer(step: QuestionStep): { kind: "text" | "math"; value
     case "goal":
       return { kind: "text", value: "See the explanation below." };
   }
+}
+
+/** Decimal with up to 4 significant figures (engineering answers), e.g. 159.2, 0.00254, 120000. */
+export function formatDecimalForTex(x: number): string {
+  if (Number.isInteger(x)) return String(x);
+  const v = Number(x.toPrecision(4));
+  return Math.abs(v) >= 1e21 || (Math.abs(v) < 1e-6 && v !== 0) ? v.toExponential(3).replace(/e([+-]?\d+)/, String.raw`\times 10^{$1}`) : String(v);
 }
 
 export function formatNumberForTex(x: number): string {

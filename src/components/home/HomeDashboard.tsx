@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, BatteryCharging, BookOpen, Flame, RotateCcw, Sparkles, Target } from "lucide-react";
-import type { CourseMeta, LessonMeta } from "@/content/types";
+import { ArrowRight, BatteryCharging, BookOpen, CalendarClock, Flame, RotateCcw, Sigma, Sparkles, Target, Wrench, type LucideIcon } from "lucide-react";
+import type { CourseMeta } from "@/content/types";
+import type { ProgressState } from "@/lib/progress/types";
 import { useProgressStore } from "@/lib/progress/store";
 import { dueProblems, getStreakStatus, weakProblems, xpThisWeek, xpToday, xpTotal } from "@/lib/progress/logic";
 import { STREAK_PROBLEMS_PER_DAY } from "@/lib/progress/types";
@@ -12,7 +13,25 @@ import { Button } from "@/components/ui/Button";
 import { Card, Eyebrow, Pill } from "@/components/ui/Card";
 import { cn } from "@/lib/cn";
 
-export function HomeDashboard({ course }: { course: CourseMeta }) {
+interface CourseLook {
+  /** Position on the home page. */
+  order: number;
+  icon: LucideIcon;
+  tone: string;
+  /** An upcoming exam, shown under the course title through `until` (an ISO day). */
+  exam?: { until: string; label: string };
+}
+
+const LOOKS: Record<string, CourseLook> = {
+  "solid-mechanics": { order: 0, icon: Wrench, tone: "bg-orange-soft text-orange", exam: { until: "2026-11-02", label: "Midterm 2 · Mon Nov 2 · Lectures 11–26 = Units 1–6" } },
+  "linear-algebra": { order: 1, icon: Sigma, tone: "bg-blue-soft text-blue" },
+};
+
+const DEFAULT_LOOK: CourseLook = { order: Number.MAX_SAFE_INTEGER, icon: BookOpen, tone: "bg-blue-soft text-blue" };
+
+const lookOf = (courseId: string) => LOOKS[courseId] ?? DEFAULT_LOOK;
+
+export function HomeDashboard({ courses }: { courses: CourseMeta[] }) {
   const state = useProgressStore((s) => s.state);
   const hydrated = useProgressStore((s) => s.hydrated);
   const sync = useProgressStore((s) => s.sync);
@@ -25,10 +44,7 @@ export function HomeDashboard({ course }: { course: CourseMeta }) {
       .catch(() => setTutor({ configured: false }));
   }, []);
 
-  const lessons = useMemo(() => course.units.flatMap((u) => u.lessons.map((l) => ({ ...l, unitTitle: u.title }))), [course]);
-  const completed = lessons.filter((l) => state.lessons[l.id]?.status === "completed").length;
-  const inProgress = lessons.find((l) => state.lessons[l.id]?.status === "in-progress" && state.lessons[l.id]?.stepIndex > 0);
-  const nextUp: (LessonMeta & { unitTitle: string }) | undefined = inProgress ?? lessons.find((l) => state.lessons[l.id]?.status !== "completed");
+  const ordered = useMemo(() => [...courses].sort((a, b) => lookOf(a.id).order - lookOf(b.id).order), [courses]);
   const clock = useClock();
   const today = clock.today ?? "";
   const streak = clock.today ? getStreakStatus(state, clock.today) : { current: 0, status: "none" as const };
@@ -108,69 +124,11 @@ export function HomeDashboard({ course }: { course: CourseMeta }) {
         </Card>
       </div>
 
-      {/* continue + course */}
-      <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-        <Card className="flex flex-col justify-between gap-4 p-5">
-          <div>
-            <Eyebrow>{inProgress ? "Pick up where you left off" : completed === 0 ? "Start here" : "Up next"}</Eyebrow>
-            {nextUp ? (
-              <>
-                <h2 className="mt-1 font-serif text-2xl">{nextUp.title}</h2>
-                <p className="mt-1 text-sm text-muted">
-                  {nextUp.unitTitle} · {nextUp.textbook} · ~{nextUp.minutes} min · {nextUp.questionCount} problems
-                </p>
-                <p className="mt-2 text-[15px]">{nextUp.summary}</p>
-                {inProgress && (
-                  <p className="mt-2 text-sm text-muted">
-                    Step {state.lessons[inProgress.id].stepIndex + 1} of {inProgress.stepCount}
-                  </p>
-                )}
-              </>
-            ) : (
-              <h2 className="mt-1 font-serif text-2xl">You&apos;ve completed every lesson. Keep the level checks and reviews going.</h2>
-            )}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {nextUp && (
-              <Link href={`/lesson/${nextUp.id}`}>
-                <Button variant="primary" size="lg" ledge>
-                  {inProgress ? "Continue" : "Start lesson"} <ArrowRight size={18} />
-                </Button>
-              </Link>
-            )}
-            <Link href={`/course/${course.id}`}>
-              <Button variant="outline" size="lg">
-                Course map
-              </Button>
-            </Link>
-          </div>
-        </Card>
-
-        <Card className="grid gap-3 p-5">
-          <div className="flex items-start gap-3">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-soft text-blue">
-              <BookOpen size={20} />
-            </span>
-            <div className="min-w-0">
-              <h2 className="font-serif text-xl">{course.title}</h2>
-              <p className="text-sm text-muted">
-                {course.lessonCount} lessons · {course.exerciseCount} exercises
-              </p>
-            </div>
-          </div>
-          <div>
-            <div className="mb-1 flex justify-between text-xs text-muted">
-              <span>
-                {completed} of {course.lessonCount} lessons
-              </span>
-              <span>{Math.round((100 * completed) / Math.max(1, course.lessonCount))}%</span>
-            </div>
-            <div className="h-2 overflow-hidden rounded-full bg-surface-3">
-              <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${(100 * completed) / Math.max(1, course.lessonCount)}%` }} />
-            </div>
-          </div>
-          <p className="text-sm text-muted">{course.tagline}</p>
-        </Card>
+      {/* one block per course: progress, then continue (rows line up across columns) */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        {ordered.map((c) => (
+          <CourseBlock key={c.id} course={c} state={state} today={clock.today} />
+        ))}
       </div>
 
       {/* review + weak spots + tutor */}
@@ -253,5 +211,91 @@ export function HomeDashboard({ course }: { course: CourseMeta }) {
         </ul>
       </Card>
     </div>
+  );
+}
+
+/** A course's progress card and its "continue / start" card. On wide screens the two rows line up with the neighbouring course's. */
+function CourseBlock({ course, state, today }: { course: CourseMeta; state: ProgressState; today: string | null }) {
+  const look = lookOf(course.id);
+  const lessons = useMemo(() => course.units.flatMap((u) => u.lessons.map((l) => ({ ...l, unitTitle: u.title }))), [course]);
+  const completed = lessons.filter((l) => state.lessons[l.id]?.status === "completed").length;
+  const inProgress = lessons.find((l) => state.lessons[l.id]?.status === "in-progress" && state.lessons[l.id]?.stepIndex > 0);
+  const nextUp = inProgress ?? lessons.find((l) => state.lessons[l.id]?.status !== "completed");
+  const pct = (100 * completed) / Math.max(1, course.lessonCount);
+  // Client-only (the server has no "today"), and gone once the exam day has passed.
+  const exam = look.exam && today !== null && today <= look.exam.until ? look.exam.label : null;
+
+  return (
+    <section aria-label={course.title} className="grid gap-4 lg:row-span-2 lg:grid-rows-subgrid">
+      <Card className="grid content-start gap-3 p-5">
+        <div className="flex items-start gap-3">
+          <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl", look.tone)}>
+            <look.icon size={20} />
+          </span>
+          <div className="min-w-0">
+            <h2 className="font-serif text-xl">{course.title}</h2>
+            {exam && (
+              <p className="mt-0.5 flex items-start gap-1 text-xs font-semibold text-gold-ink">
+                <CalendarClock size={13} className="mt-px shrink-0" /> {exam}
+              </p>
+            )}
+            <p className="text-sm text-muted">{lessons.length > 0 ? `${course.lessonCount} lessons · ${course.exerciseCount} exercises` : `${course.units.length} units · lessons are being written`}</p>
+          </div>
+        </div>
+        {lessons.length > 0 && (
+          <div>
+            <div className="mb-1 flex justify-between text-xs text-muted">
+              <span>
+                {completed} of {course.lessonCount} lessons
+              </span>
+              <span>{Math.round(pct)}%</span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-surface-3">
+              <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+            </div>
+          </div>
+        )}
+        <p className="text-sm text-muted">{course.tagline}</p>
+      </Card>
+
+      <Card className="flex flex-col justify-between gap-4 p-5">
+        <div>
+          <Eyebrow>{lessons.length === 0 ? "Coming soon" : inProgress ? "Pick up where you left off" : completed === 0 ? "Start here" : "Up next"}</Eyebrow>
+          {lessons.length === 0 ? (
+            <>
+              <h3 className="mt-1 font-serif text-2xl">Lessons are being written</h3>
+              <p className="mt-1 text-sm text-muted">The units are already on the course map; lessons appear there as they land.</p>
+            </>
+          ) : nextUp ? (
+            <>
+              <h3 className="mt-1 font-serif text-2xl">{nextUp.title}</h3>
+              <p className="mt-1 text-sm text-muted">{[nextUp.unitTitle, nextUp.textbook, `~${nextUp.minutes} min`, `${nextUp.questionCount} problems`].filter(Boolean).join(" · ")}</p>
+              <p className="mt-2 text-[15px]">{nextUp.summary}</p>
+              {inProgress && (
+                <p className="mt-2 text-sm text-muted">
+                  Step {state.lessons[inProgress.id].stepIndex + 1} of {inProgress.stepCount}
+                </p>
+              )}
+            </>
+          ) : (
+            <h3 className="mt-1 font-serif text-2xl">You&apos;ve completed every lesson. Keep the level checks and reviews going.</h3>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {nextUp && (
+            <Link href={`/lesson/${nextUp.id}`}>
+              <Button variant="primary" size="lg" ledge>
+                {inProgress ? "Continue" : "Start lesson"} <ArrowRight size={18} />
+              </Button>
+            </Link>
+          )}
+          <Link href={`/course/${course.id}`}>
+            <Button variant="outline" size="lg">
+              Course map
+            </Button>
+          </Link>
+        </div>
+      </Card>
+    </section>
   );
 }

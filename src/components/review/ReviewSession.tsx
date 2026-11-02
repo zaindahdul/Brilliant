@@ -7,6 +7,18 @@ import type { QuestionStep } from "@/content/types";
 import { generate, parseGeneratedKey } from "@/content/generators";
 import { PracticePlayer, type PracticeProblem } from "@/components/player/PracticePlayer";
 
+/**
+ * Unit ids carry their course ("u3" is Math 54's linear algebra, "sm2" is solid
+ * mechanics), which is all the tutor needs here — no course content on the client.
+ */
+function courseOfUnit(unitId: string): { id: string; title: string } | null {
+  if (/^sm\d+$/.test(unitId)) return { id: "solid-mechanics", title: "Solid Mechanics" };
+  if (/^u\d+$/.test(unitId)) return { id: "linear-algebra", title: "Linear Algebra" };
+  return null;
+}
+
+const MIXED = { id: "review", title: "Review" };
+
 export function ReviewSession() {
   const params = useSearchParams();
   const keysParam = params.get("keys") ?? "";
@@ -37,7 +49,7 @@ export function ReviewSession() {
         }
       }
       out.sort((a, b) => a.order - b.order);
-      return out.map((p) => ({ key: p.key, unitId: p.unitId, lessonId: p.lessonId, step: p.step }));
+      return out.map((p) => ({ key: p.key, unitId: p.unitId, lessonId: p.lessonId, courseId: courseOfUnit(p.unitId)?.id, step: p.step }));
     }
     load()
       .then((set) => {
@@ -62,5 +74,8 @@ export function ReviewSession() {
     );
   if (!set) return <div className="flex min-h-dvh items-center justify-center text-muted">Building your review set…</div>;
 
-  return <PracticePlayer unit={{ id: "review", title: "Review" }} course={{ id: "linear-algebra", title: "Linear Algebra" }} problems={[]} generatorIds={[]} fixed={set} mode="review" backHref="/review" />;
+  // A set from one course is that course's review; a mixed set is just "Review", and each problem tells the tutor its own course.
+  const shared = set.length > 0 && set.every((p) => p.courseId === set[0].courseId) ? courseOfUnit(set[0].unitId) : null;
+
+  return <PracticePlayer unit={{ id: "review", title: "Review" }} course={shared ?? MIXED} problems={[]} generatorIds={[]} fixed={set} mode="review" backHref="/review" />;
 }

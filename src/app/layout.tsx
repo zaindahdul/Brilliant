@@ -22,11 +22,11 @@ const fraunces = Fraunces({
 
 export const metadata: Metadata = {
   title: {
-    default: "Nudge — Learn linear algebra by doing",
+    default: "Nudge — learn by doing",
     template: "%s · Nudge",
   },
   description:
-    "An interactive, Brilliant-style linear algebra course for Math 54. The AI tutor only nudges — it never hands you the answer.",
+    "Interactive, Brilliant-style courses for Berkeley's Math 54 (linear algebra) and CE C30 / ME C85 (solid mechanics). The AI tutor only nudges — it never hands you the answer.",
 };
 
 export const viewport: Viewport = {

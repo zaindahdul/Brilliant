@@ -17,6 +17,7 @@ interface Props {
 
 export function TutorPanel({ open, onClose, chatId, context, nudgeRequest }: Props) {
   const status = useTutorStatus();
+  const bigIdea = context.courseId === "solid-mechanics" ? "plane sections remain plane" : "pivot in every row";
   return (
     <div
       className={cn(
@@ -52,7 +53,7 @@ export function TutorPanel({ open, onClose, chatId, context, nudgeRequest }: Pro
             </p>
             <ul className="list-disc pl-5">
               <li>&ldquo;Here&apos;s my thinking: … where does it go wrong?&rdquo;</li>
-              <li>&ldquo;What does &lsquo;pivot in every row&rsquo; buy me here?&rdquo;</li>
+              <li>&ldquo;What does &lsquo;{bigIdea}&rsquo; buy me here?&rdquo;</li>
               <li>&ldquo;Quiz me on this idea.&rdquo;</li>
             </ul>
           </>

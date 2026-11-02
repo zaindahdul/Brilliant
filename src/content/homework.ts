@@ -1,27 +1,63 @@
 /**
- * Math 54, Fall 2026 homework schedule (instructor: Ko Ohm) — section and
- * problem numbers only, as published on the public course page:
- * https://math.berkeley.edu/~kwohm/Homework54-FA26.html
+ * Homework schedules for the two classes this app teaches — section and
+ * problem numbers only. The problem statements themselves stay in the
+ * textbooks; these lists exist so the app can point each assignment at the
+ * lessons that teach it and so the tutor knows which problem you're working on.
  *
- * The problem statements themselves stay in the textbook; this list exists so
- * the app can point each assignment at the lessons that teach it and so the
- * tutor knows which problem you're working on.
+ * - Math 54, Fall 2026 (instructor: Ko Ohm), as published on the public
+ *   course page: https://math.berkeley.edu/~kwohm/Homework54-FA26.html
+ * - CE C30 / ME C85, Fall 2026 (Prof. Govindjee): problems from Govindjee,
+ *   *Engineering Mechanics of Deformable Solids*; due Fridays at 5:59 pm,
+ *   each set covering the previous week's lectures.
  */
 
+/** "lay" = Math 54's linear algebra (covered here), "nagle" = its ODE half (not covered), "govindjee" = CE C30 / ME C85. */
+export type HomeworkBook = "lay" | "nagle" | "govindjee";
+
 export interface HomeworkSection {
+  /** Key into the course's `sectionLessons`: "1.2" (shown as §1.2), or a label with its own prefix ("§2.4–2.4.1", "ch. 4"). */
   section: string;
+  /** Problem numbers; empty for a reading-only section. */
   problems: string;
   note?: string;
-  /** "lay" = linear algebra (covered here), "nagle" = ODE half (not covered). */
-  book: "lay" | "nagle";
+  book: HomeworkBook;
 }
 
 export interface HomeworkSet {
   id: string;
-  number: number;
+  /** Assignment number, for classes that number their sets (Math 54). */
+  number?: number;
+  /** Lectures the set covers, for classes that key homework to lectures (CE C30), e.g. "13–14". */
+  lectures?: string;
   due: string; // ISO date
+  note?: string;
   sections: HomeworkSection[];
 }
+
+export interface HomeworkCourse {
+  /** The course in `@/content/course` that teaches this material. */
+  courseId: string;
+  /** The class, e.g. "Math 54". */
+  title: string;
+  /** Term and instructor. */
+  subtitle: string;
+  /** How the homework tutor names the course, e.g. "Linear Algebra (Math 54)". */
+  tutorTitle: string;
+  /** Short textbook name for section labels: "Lay §1.2". */
+  bookLabel: string;
+  /** The class's own textbook; sections from any other book (Math 54's ODE half) are listed but not tutored. */
+  book: HomeworkBook;
+  /** Shown after each due date. */
+  dueTime: string;
+  /** In due-date order. */
+  sets: HomeworkSet[];
+  /** Which lessons teach each section (keys are `HomeworkSection.section`); a section missing here isn't covered yet. */
+  sectionLessons: Record<string, string[]>;
+}
+
+/* ------------------------------------------------------------------ */
+/* Math 54 (kept under the original export names)                     */
+/* ------------------------------------------------------------------ */
 
 export const homeworkSets: HomeworkSet[] = [
   {
@@ -168,8 +204,198 @@ export const sectionLessons: Record<string, string[]> = {
   "7.4": ["u9-l2-svd"],
 };
 
-/** Which unit's Level Check drills each section. */
-export function unitForSection(section: string): string | null {
-  const first = sectionLessons[section]?.[0];
+/* ------------------------------------------------------------------ */
+/* CE C30 / ME C85                                                     */
+/* ------------------------------------------------------------------ */
+
+const NOT_COVERED = "Not covered by the course yet.";
+
+const solidMechanicsSets: HomeworkSet[] = [
+  {
+    id: "lec13-14",
+    lectures: "13–14",
+    due: "2026-10-02",
+    sections: [
+      { section: "§2.1–2.3", problems: "2.3, 2.4", book: "govindjee" },
+      { section: "§2.4–2.4.1", problems: "2.9, 2.15", book: "govindjee" },
+    ],
+  },
+  {
+    id: "lec15-17",
+    lectures: "15–17",
+    due: "2026-10-09",
+    sections: [
+      { section: "§2.4.2", problems: "2.11, 2.16, 2.31", book: "govindjee" },
+      { section: "§2.5–2.6", problems: "2.33", book: "govindjee" },
+      { section: "§3.1", problems: "3.4", book: "govindjee" },
+    ],
+  },
+  {
+    id: "lec18-20",
+    lectures: "18–20",
+    due: "2026-10-16",
+    sections: [
+      { section: "§3.2", problems: "3.8, 3.10, 3.15", book: "govindjee" },
+      { section: "§3.3", problems: "", note: "Reading only — no problems assigned.", book: "govindjee" },
+      { section: "ch. 4", problems: "4.1, 4.5, 4.12", book: "govindjee" },
+    ],
+  },
+  {
+    id: "lec21-23",
+    lectures: "21–23",
+    due: "2026-10-23",
+    sections: [
+      { section: "ch. 5", problems: "5.3, 5.11", book: "govindjee" },
+      { section: "§6.1", problems: "6.4", book: "govindjee" },
+      { section: "§6.2–6.3", problems: "6.7, 6.10, 6.11", book: "govindjee" },
+    ],
+  },
+  {
+    id: "lec24-26",
+    lectures: "24–26",
+    due: "2026-10-30",
+    sections: [
+      { section: "§7.1–7.2", problems: "7.2", book: "govindjee" },
+      { section: "§7.3–7.4", problems: "7.5, 7.8, 7.13, 7.21, 7.26, 7.28", book: "govindjee" },
+      { section: "§7.7", problems: "7.41, 7.43", book: "govindjee" },
+    ],
+  },
+  {
+    id: "lec27-29",
+    lectures: "27–29",
+    due: "2026-11-06",
+    sections: [
+      { section: "§8.1", problems: "8.2", book: "govindjee" },
+      { section: "§8.2", problems: "8.5", book: "govindjee" },
+      { section: "§8.3", problems: "8.8, 8.13, 8.15", book: "govindjee" },
+    ],
+  },
+  {
+    id: "lec31-33",
+    lectures: "31–33",
+    due: "2026-11-13",
+    sections: [
+      { section: "§8.4", problems: "8.19, 8.34", note: NOT_COVERED, book: "govindjee" },
+      { section: "§8.5", problems: "8.38", note: NOT_COVERED, book: "govindjee" },
+      { section: "§8.6", problems: "8.41, 8.47", note: NOT_COVERED, book: "govindjee" },
+    ],
+  },
+  {
+    id: "lec34-36",
+    lectures: "34–36",
+    due: "2026-11-20",
+    sections: [
+      { section: "§9.1–9.2.1", problems: "9.1", note: NOT_COVERED, book: "govindjee" },
+      { section: "§9.2.2–9.2.3", problems: "9.2, 9.4", note: NOT_COVERED, book: "govindjee" },
+      { section: "§9.2.4–9.2.5", problems: "9.6, 9.11", note: NOT_COVERED, book: "govindjee" },
+    ],
+  },
+  {
+    id: "lec37-42",
+    lectures: "37–42",
+    due: "2026-12-04",
+    note: "Two weeks of lectures: Thanksgiving week falls in between.",
+    sections: [
+      { section: "§9.3", problems: "9.15, 9.16a, 9.18", note: NOT_COVERED, book: "govindjee" },
+      { section: "§9.4", problems: "9.25, 9.26, 9.28, 9.29", note: NOT_COVERED, book: "govindjee" },
+      { section: "§12.1–12.2", problems: "12.1, 12.4, 12.5, 12.12", note: NOT_COVERED, book: "govindjee" },
+      { section: "§12.3", problems: "12.14, 12.15", note: NOT_COVERED, book: "govindjee" },
+    ],
+  },
+];
+
+/** Which lessons teach each Govindjee section (§8.4 onward isn't covered yet). */
+const solidMechanicsSectionLessons: Record<string, string[]> = {
+  "§2.1–2.3": ["sm1-l1-displacement-and-strain", "sm1-l2-stress-and-equilibrium", "sm1-l3-hookes-law"],
+  "§2.4–2.4.1": ["sm1-l4-axial-response", "sm1-l5-indeterminate-bars"],
+  "§2.4.2": ["sm1-l6-differential-equation"],
+  "§2.5–2.6": ["sm1-l7-energy-and-design"],
+  "§3.1": ["sm2-l1-average-stress", "sm2-l2-design-with-average-stresses"],
+  "§3.2": ["sm2-l3-stress-at-a-point", "sm2-l4-cauchy-and-resultants", "sm2-l5-equilibrium-in-stresses"],
+  "§3.3": ["sm2-l6-polar-and-spherical"],
+  "ch. 4": ["sm3-l1-normal-and-shear-strain", "sm3-l2-strain-tensor", "sm3-l3-polar-strain-and-counting"],
+  "ch. 5": ["sm4-l1-poisson-and-3d-hooke", "sm4-l2-pressure-volume-energy", "sm4-l3-plane-stress-and-plane-strain", "sm4-l4-uniaxial-and-other-coordinates"],
+  "§6.1": ["sm5-l1-axial-rod-in-3d"],
+  "§6.2–6.3": ["sm5-l2-cylindrical-pressure-vessels", "sm5-l3-spheres-and-design", "sm5-l4-saint-venant"],
+  "§7.1–7.2": ["sm6-l1-kinematics", "sm6-l2-equilibrium-and-torque-diagrams"],
+  "§7.3–7.4": ["sm6-l3-elastic-response", "sm6-l4-indeterminate-and-ode", "sm6-l5-energy-and-nonlinear"],
+  "§7.7": ["sm6-l6-thin-walled-tubes"],
+  "§8.1": ["sm7-l1-kinematics-of-bending"],
+  "§8.2": ["sm7-l2-equilibrium-shear-moment"],
+  "§8.3": ["sm7-l3-elastic-response", "sm7-l4-composite-beams"],
+};
+
+/* ------------------------------------------------------------------ */
+/* Registry and helpers                                                */
+/* ------------------------------------------------------------------ */
+
+/** Every class with a homework schedule, Math 54 first. */
+export const homeworkCourses: HomeworkCourse[] = [
+  {
+    courseId: "linear-algebra",
+    title: "Math 54",
+    subtitle: "Fall 2026",
+    tutorTitle: "Linear Algebra (Math 54)",
+    bookLabel: "Lay",
+    book: "lay",
+    dueTime: "11:59 pm PT",
+    sets: homeworkSets,
+    sectionLessons,
+  },
+  {
+    courseId: "solid-mechanics",
+    title: "CE C30 / ME C85",
+    subtitle: "Fall 2026 · Prof. Govindjee",
+    tutorTitle: "Solid Mechanics (CE C30 / ME C85)",
+    bookLabel: "Govindjee",
+    book: "govindjee",
+    dueTime: "5:59 pm PT",
+    sets: solidMechanicsSets,
+    sectionLessons: solidMechanicsSectionLessons,
+  },
+];
+
+export function getHomeworkCourse(courseId: string | null | undefined): HomeworkCourse | undefined {
+  return homeworkCourses.find((c) => c.courseId === courseId);
+}
+
+/** "1.2" → "§1.2"; labels that carry their own prefix ("§2.4.2", "ch. 4") pass through. */
+export function sectionLabel(section: string): string {
+  return /^\d/.test(section) ? `§${section}` : section;
+}
+
+/** "Homework 3" for numbered sets, "Lectures 13–14" for sets keyed to lectures. */
+export function homeworkTitle(hw: HomeworkSet): string {
+  if (hw.number !== undefined) return `Homework ${hw.number}`;
+  return hw.lectures ? `Lectures ${hw.lectures}` : "Homework";
+}
+
+/** The first set due on or after `today` (an ISO day); undefined once every set is past. */
+export function nextDueSet(hc: HomeworkCourse, today: string): HomeworkSet | undefined {
+  return hc.sets.find((h) => h.due >= today);
+}
+
+/** Which class the homework pages open on: Solid Mechanics when its next set is due no later than Math 54's, otherwise Math 54. */
+export function defaultHomeworkCourseId(today: string): string {
+  const nextDue = (courseId: string) => {
+    const hc = getHomeworkCourse(courseId);
+    return (hc && nextDueSet(hc, today)?.due) ?? "9999-12-31";
+  };
+  return nextDue("solid-mechanics") <= nextDue("linear-algebra") ? "solid-mechanics" : "linear-algebra";
+}
+
+/** Lesson ids that teach a section; empty when the course doesn't cover it (yet). */
+export function lessonsForSection(section: string, lessons: Record<string, string[]> = sectionLessons): string[] {
+  return Object.hasOwn(lessons, section) ? lessons[section] : [];
+}
+
+/** Which unit's Level Check drills a section: the prefix of its first lesson id ("u6-l2-…" → "u6", "sm3-l1-…" → "sm3"). */
+export function unitForSection(section: string, lessons: Record<string, string[]> = sectionLessons): string | null {
+  const first = lessonsForSection(section, lessons)[0];
   return first ? first.split("-")[0] : null;
+}
+
+/** Readable stand-in for a lesson id when its title isn't at hand: "sm1-l3-hookes-law" → "hookes law". */
+export function prettyLessonId(id: string): string {
+  return id.replace(/^[a-z]+\d+-l\d+-/, "").replace(/-/g, " ");
 }

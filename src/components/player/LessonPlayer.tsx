@@ -220,6 +220,7 @@ function LessonPlayerInner({ lesson, unit, course, next }: Props) {
     }
     const resolved = st.phase === "correct" || st.phase === "revealed" || (!!lp && (lp.correct || lp.revealed));
     return {
+      courseId: course.id,
       courseTitle: course.title,
       unitTitle: unit.title,
       lessonTitle: lesson.title,
@@ -236,7 +237,7 @@ function LessonPlayerInner({ lesson, unit, course, next }: Props) {
       nudgeLevel: 1,
       mode: resolved ? "debrief" : "stuck",
     };
-  }, [step, st, lessonProgress, course.title, unit.title, lesson.title]);
+  }, [step, st, lessonProgress, course.id, course.title, unit.title, lesson.title]);
 
   const exit = () => router.push(`/course/${course.id}`);
 

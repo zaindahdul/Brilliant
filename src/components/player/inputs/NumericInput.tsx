@@ -20,7 +20,8 @@ interface Props {
 export function NumericInput({ value, onChange, onSubmit, disabled, placeholder, prefix, suffix, state = "idle", autoFocus }: Props) {
   const id = useId();
   const parsed = value.trim() ? parseNumber(value) : null;
-  const showPreview = parsed !== null && !/^-?\d+$/.test(value.trim());
+  // Plain integers and decimals need no "= …" preview; expressions (1/3, sqrt(2), 2^3) do.
+  const showPreview = parsed !== null && !/^-?\d*\.?\d+$/.test(value.trim());
 
   return (
     <div className="flex flex-col items-center gap-2">
