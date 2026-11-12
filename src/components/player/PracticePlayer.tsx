@@ -14,7 +14,7 @@ import { newSeed, rngFrom, shuffle } from "@/lib/random";
 import { sounds } from "@/lib/sound";
 import type { TutorContext } from "@/lib/ai/prompt";
 import { Button } from "@/components/ui/Button";
-import { Card, Eyebrow } from "@/components/ui/Card";
+import { ActionBar, PlayerHeader, TUTOR_OFFSET } from "./PlayerChrome";
 import { FeedbackPanel, type Phase } from "./FeedbackPanel";
 import { StepView } from "./StepView";
 import { TutorPanel } from "@/components/tutor/TutorPanel";
@@ -168,7 +168,9 @@ export function PracticePlayer({ unit, course, problems, generatorIds, fixed, mo
       if (!set || finished) return;
       const target = e.target as HTMLElement | null;
       const typing = target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT");
-      if (e.key === "Enter" && !typing) {
+      // Enter on a focused link or button (other than an answer choice) activates that control, not the primary action.
+      const onControl = !!target?.closest?.("a, button:not([role=radio]):not([role=checkbox])");
+      if (e.key === "Enter" && !typing && !onControl) {
         e.preventDefault();
         if (st.phase === "answering") check();
         else if (st.phase === "wrong1") tryAgain();
@@ -220,32 +222,21 @@ export function PracticePlayer({ unit, course, problems, generatorIds, fixed, mo
   /* ---------- chooser ---------- */
   if (!set) {
     return (
-      <div className="mx-auto grid w-full max-w-lg gap-5 px-4 py-10">
+      <div className="mx-auto w-full max-w-lg px-5 py-10 sm:py-14">
         <Link href={backHref} className="inline-flex items-center gap-1 text-sm text-muted hover:text-text">
           <ArrowLeft size={16} /> Back
         </Link>
-        <div>
-          <Eyebrow>Level check · {unit.title}</Eyebrow>
-          <h1 className="mt-1 font-serif text-3xl">Prove it to yourself</h1>
-          <p className="mt-2 text-muted">No hints on the first miss, problems shuffled and partly generated fresh, surface details changed. This is where you find out what actually stuck.</p>
+        <p className="mt-8 text-sm text-muted">{unit.title}</p>
+        <h1 className="mt-1 font-serif text-4xl">Level check</h1>
+        <p className="mt-3 text-muted">Fresh problems, shuffled, with no hint on the first miss. Your first-try score here is the honest one.</p>
+        <div className="mt-8 grid gap-3">
+          <Button variant="primary" size="xl" ledge full onClick={() => start(5)}>
+            5 problems
+          </Button>
+          <Button variant="outline" size="xl" full onClick={() => start(15)}>
+            15 problems
+          </Button>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Card className="grid gap-2 p-5">
-            <div className="font-serif text-xl">Quick check</div>
-            <p className="text-sm text-muted">5 problems · about 5 minutes</p>
-            <Button variant="ink" ledge onClick={() => start(5)}>
-              Start quick check
-            </Button>
-          </Card>
-          <Card className="grid gap-2 p-5">
-            <div className="font-serif text-xl">Practice</div>
-            <p className="text-sm text-muted">15 problems · about 15 minutes</p>
-            <Button variant="primary" ledge onClick={() => start(15)}>
-              Start practice
-            </Button>
-          </Card>
-        </div>
-        <p className="text-xs text-muted">Your default was {settings.practiceLength} — this choice updates it.</p>
       </div>
     );
   }
@@ -270,31 +261,23 @@ export function PracticePlayer({ unit, course, problems, generatorIds, fixed, mo
     const headline = pct(firstTry) >= 90 ? "Excellent!" : pct(firstTry) >= 70 ? "Solid." : pct(firstTry) >= 50 ? "Getting there." : "Worth another pass.";
     const nextAction = pct(firstTry) >= 80 ? "Move on — and come back in a few days for a spaced review." : pct(eventually) >= 80 ? "You get there with a second look. Re-do the lessons for the problems you missed, then try again tomorrow." : "Re-read the unit's lessons and talk the missed problems through with the tutor.";
     return (
-      <div className="mx-auto grid w-full max-w-lg gap-5 px-4 py-10">
-        <div className="text-center">
-          <Eyebrow>{mode === "review" ? "Review complete" : "Level check complete"}</Eyebrow>
-          <h1 className="mt-2 font-serif text-4xl">{headline}</h1>
-        </div>
-        <Card className="grid grid-cols-3 divide-x divide-border p-0">
-          <Stat label="First try" value={`${pct(firstTry)}%`} />
-          <Stat label="Eventually correct" value={`${pct(eventually)}%`} />
-          <Stat label="Completed" value={`${set.length} of ${set.length}`} />
-        </Card>
-        <div className="flex justify-center">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-gold-soft px-3 py-1.5 text-sm font-semibold text-gold-ink">
-            <Sparkles size={15} /> +{finished.xp} XP
-          </span>
-        </div>
-        <p className="text-center text-[15px] text-muted">{nextAction}</p>
-        <div className="grid gap-2">
+      <div className="mx-auto w-full max-w-lg px-5 py-14 text-center">
+        <p className="text-sm text-muted">{mode === "review" ? "Review complete" : "Level check complete"}</p>
+        <h1 className="mt-2 font-serif text-4xl">{headline}</h1>
+        <p className="mt-6 font-serif text-6xl tabular-nums">{pct(firstTry)}%</p>
+        <p className="mt-1 text-sm text-muted">
+          right on the first try · {eventually} of {set.length} by the second · +{finished.xp} XP
+        </p>
+        <p className="mx-auto mt-6 max-w-sm text-[15px] text-muted">{nextAction}</p>
+        <div className="mt-8 grid gap-2">
           {!fixed && (
             <Button variant="primary" size="xl" ledge full onClick={() => start(set.length <= 5 ? 5 : 15)}>
               Another set <ArrowRight size={18} />
             </Button>
           )}
           <Link href={backHref} className="contents">
-            <Button variant="outline" size="lg" full>
-              Back
+            <Button variant={fixed ? "primary" : "ghost"} size="xl" full>
+              Done
             </Button>
           </Link>
         </div>
@@ -304,68 +287,52 @@ export function PracticePlayer({ unit, course, problems, generatorIds, fixed, mo
 
   /* ---------- problem ---------- */
   const canCheck = !isAnswerEmpty(st.answer);
+  const resolved = st.phase === "correct" || st.phase === "revealed";
+  const isLast = index + 1 >= set.length;
   return (
-    <div className="min-h-dvh">
-      <header className="sticky top-0 z-30 border-b border-border/70 bg-bg/90 backdrop-blur">
-        <div className={cn("mx-auto flex max-w-3xl items-center gap-3 px-3 py-2.5", tutorOpen && "sm:mr-[400px]")}>
-          <button type="button" onClick={() => router.push(backHref)} aria-label="Exit" className="rounded-full p-2 text-muted hover:bg-surface-2">
-            <ArrowLeft size={20} />
-          </button>
-          <div className="flex flex-1 items-center gap-1" aria-label={`Problem ${index + 1} of ${set.length}`}>
-            {set.map((p, i) => {
-              const r = results.find((x) => x.key === p.key);
-              return <div key={p.key} className={cn("h-2.5 flex-1 rounded-sm", r ? (r.eventually ? (r.firstTry ? "bg-primary" : "bg-primary/60") : "bg-danger") : i === index ? "bg-blue" : "bg-surface-3")} />;
-            })}
-          </div>
-          <button type="button" onClick={() => setTutorOpen((o) => !o)} className={cn("inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold", tutorOpen ? "bg-purple text-white" : "bg-purple-soft text-purple")}>
-            <Sparkles size={15} /> <span className="hidden sm:inline">Tutor</span>
-          </button>
-        </div>
-      </header>
+    <div className={cn("min-h-dvh", tutorOpen && TUTOR_OFFSET)}>
+      <PlayerHeader onExit={() => router.push(backHref)} done={results.length} current={index + 1} total={set.length} label={`Problem ${index + 1} of ${set.length}`} />
 
-      <main className={cn("mx-auto w-full max-w-2xl px-4 pb-40 pt-6", tutorOpen && "sm:mr-[400px] lg:mx-auto lg:pr-[400px]")}>
-        <div className="eyebrow mb-3">
-          Problem {index + 1} of {set.length}
-        </div>
+      <main className="mx-auto w-full max-w-2xl px-4 pb-36 pt-4">
         <div key={current!.key}>
           <StepView step={q!} answer={st.answer} onAnswer={(a) => setSt((s) => ({ ...s, answer: a, invalid: undefined }))} onSubmit={check} phase={st.phase} wrongChoiceIds={st.wrongChoiceIds} attemptKey={st.attemptKey} />
         </div>
         {st.invalid && <p className="mt-3 text-sm text-danger">{st.invalid}</p>}
-        <div className="mt-5">
-          {st.phase !== "answering" ? (
-            <FeedbackPanel
-              phase={st.phase}
-              hint={st.feedback}
-              explanation={q!.explanation}
-              answer={formatAnswer(q!)}
-              onTryAgain={tryAgain}
-              onContinue={next}
-              onNudge={() => {
-                setTutorOpen(true);
-                setNudgeRequest((n) => n + 1);
-              }}
-              onAskWhy={() => setTutorOpen(true)}
-              isLast={index + 1 >= set.length}
-              practice
-            />
-          ) : (
-            <Button variant="ink" size="xl" ledge onClick={check} disabled={!canCheck} className="min-w-40">
-              Check
-            </Button>
-          )}
-        </div>
+        {st.phase !== "answering" && <FeedbackPanel phase={st.phase} hint={st.feedback} explanation={q!.explanation} answer={q!.type === "mc" || q!.type === "multi" ? undefined : formatAnswer(q!)} practice />}
       </main>
 
-      {tutorContext && <TutorPanel open={tutorOpen} onClose={() => setTutorOpen(false)} chatId={`practice:${current!.key}`} context={tutorContext} nudgeRequest={nudgeRequest} />}
-    </div>
-  );
-}
+      <ActionBar
+        tutorOpen={tutorOpen}
+        secondary={
+          <Button
+            variant="ghost"
+            size="lg"
+            className="-ml-3"
+            onClick={() => {
+              setTutorOpen(true);
+              if (st.phase === "wrong1" && settings.autoOfferNudge) setNudgeRequest((n) => n + 1);
+            }}
+          >
+            <Sparkles size={16} /> {resolved ? "Talk it through" : st.phase === "wrong1" ? "Get a hint" : "Ask the tutor"}
+          </Button>
+        }
+      >
+        {st.phase === "answering" ? (
+          <Button variant="primary" size="xl" ledge onClick={check} disabled={!canCheck} className="min-w-32">
+            Check
+          </Button>
+        ) : st.phase === "wrong1" ? (
+          <Button variant="primary" size="xl" ledge onClick={tryAgain} autoFocus className="min-w-32">
+            Try again
+          </Button>
+        ) : (
+          <Button variant="primary" size="xl" ledge onClick={next} autoFocus className="min-w-32">
+            {isLast ? "Finish" : "Continue"}
+          </Button>
+        )}
+      </ActionBar>
 
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="px-3 py-4 text-center">
-      <div className="font-serif text-2xl">{value}</div>
-      <div className="mt-1 text-xs font-medium text-muted">{label}</div>
+      {tutorContext && <TutorPanel open={tutorOpen} onClose={() => setTutorOpen(false)} chatId={`practice:${current!.key}`} context={tutorContext} nudgeRequest={nudgeRequest} />}
     </div>
   );
 }

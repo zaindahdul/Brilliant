@@ -300,7 +300,6 @@ export interface NumericStep extends QuestionBase {
   answer: number;
   /** Absolute tolerance; default 1e-3 (fractions like 1/3 are accepted exactly). */
   tolerance?: number;
-  placeholder?: string;
   /** Rendered to the left/right of the input, e.g. "x =" or "°". */
   prefix?: Rich;
   suffix?: Rich;

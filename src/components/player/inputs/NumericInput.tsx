@@ -10,25 +10,26 @@ interface Props {
   onChange: (v: string) => void;
   onSubmit?: () => void;
   disabled?: boolean;
-  placeholder?: string;
   prefix?: string;
   suffix?: string;
   state?: "idle" | "wrong" | "correct";
   autoFocus?: boolean;
 }
 
-export function NumericInput({ value, onChange, onSubmit, disabled, placeholder, prefix, suffix, state = "idle", autoFocus }: Props) {
+/** An empty answer box: no sample text inside it. Help appears underneath only when the input can't be read. */
+export function NumericInput({ value, onChange, onSubmit, disabled, prefix, suffix, state = "idle", autoFocus }: Props) {
   const id = useId();
   const parsed = value.trim() ? parseNumber(value) : null;
+  const unreadable = value.trim() !== "" && parsed === null;
   // Plain integers and decimals need no "= …" preview; expressions (1/3, sqrt(2), 2^3) do.
   const showPreview = parsed !== null && !/^-?\d*\.?\d+$/.test(value.trim());
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="grid gap-2">
       <label htmlFor={id} className="sr-only">
         Your answer
       </label>
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         {prefix && (
           <span className="text-lg">
             <RichText text={prefix} inline />
@@ -42,8 +43,8 @@ export function NumericInput({ value, onChange, onSubmit, disabled, placeholder,
           spellCheck={false}
           autoFocus={autoFocus}
           value={value}
-          placeholder={placeholder ?? "e.g. 3, -1/2, sqrt(2)"}
           disabled={disabled}
+          aria-invalid={unreadable || undefined}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && onSubmit) {
@@ -52,11 +53,11 @@ export function NumericInput({ value, onChange, onSubmit, disabled, placeholder,
             }
           }}
           className={cn(
-            "h-14 w-56 rounded-2xl border-2 bg-surface px-4 text-center font-mono text-xl outline-none transition-colors",
-            "focus:ring-4 focus:ring-[var(--ring)] disabled:opacity-80",
+            "h-12 w-44 rounded-xl border bg-surface px-3.5 font-mono text-lg outline-none transition-colors",
+            "focus:ring-4 focus:ring-[var(--ring)] disabled:opacity-90",
             state === "idle" && "border-border-strong focus:border-blue",
-            state === "wrong" && "border-danger bg-danger-soft/60",
-            state === "correct" && "border-primary bg-primary-soft",
+            state === "wrong" && "border-danger",
+            state === "correct" && "border-primary",
           )}
         />
         {suffix && (
@@ -64,16 +65,14 @@ export function NumericInput({ value, onChange, onSubmit, disabled, placeholder,
             <RichText text={suffix} inline />
           </span>
         )}
-      </div>
-      <div className="h-6 text-sm text-muted">
-        {value.trim() && parsed === null ? (
-          <span className="text-danger">Not a number yet — try 3, -1/2 or sqrt(2)</span>
-        ) : showPreview ? (
-          <span>
-            = <TeX tex={formatNumberForTex(parsed!)} /> {Math.abs(parsed! - Math.round(parsed! * 1000) / 1000) > 0 ? `≈ ${parsed!.toFixed(4)}` : ""}
+        {showPreview && (
+          <span className="text-sm text-muted">
+            = <TeX tex={formatNumberForTex(parsed!)} />
+            {Math.abs(parsed! - Math.round(parsed! * 1000) / 1000) > 0 ? ` ≈ ${parsed!.toFixed(4)}` : ""}
           </span>
-        ) : null}
+        )}
       </div>
+      {unreadable && <p className="text-sm text-muted">Type a number. Fractions (1/3), powers (2^3) and sqrt(2) work too.</p>}
     </div>
   );
 }

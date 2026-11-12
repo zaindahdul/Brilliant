@@ -10,6 +10,7 @@ import { NumericInput } from "./inputs/NumericInput";
 import { MatrixInput, emptyCells } from "./inputs/MatrixInput";
 import { OrderList } from "./inputs/OrderList";
 import { rngFrom, shuffle } from "@/lib/random";
+import { cn } from "@/lib/cn";
 import type { Phase } from "./FeedbackPanel";
 
 interface Props {
@@ -35,10 +36,12 @@ export function StepView({ step, answer, onAnswer, onSubmit, phase, wrongChoiceI
 
   const orderItems = useMemo(() => (step.type === "order" ? shuffle(step.items, rngFrom(step.id + ":order")) : []), [step]);
 
+  const hasSetup = Boolean(step.title || step.body || (step.visual && step.type !== "goal"));
+
   return (
-    <div className="grid gap-5">
-      {step.title && <h2 className="font-serif text-2xl leading-tight sm:text-[28px]">{step.title}</h2>}
-      {step.body && <RichText text={step.body} className="text-[16.5px]" />}
+    <div className="grid gap-6">
+      {step.title && <h1 className="font-serif text-[28px] leading-tight sm:text-3xl">{step.title}</h1>}
+      {step.body && <RichText text={step.body} className="text-[17px]" />}
 
       {step.visual && step.type !== "goal" && (
         <div key={attemptKey}>
@@ -47,8 +50,8 @@ export function StepView({ step, answer, onAnswer, onSubmit, phase, wrongChoiceI
       )}
 
       {step.type !== "reading" && (
-        <div className="grid gap-4 rounded-3xl border border-border bg-surface p-4 shadow-sm sm:p-5">
-          <div className="text-[16.5px] font-medium leading-relaxed">
+        <div className={cn("grid gap-5", hasSetup && "border-t border-border pt-6")}>
+          <div className="text-lg font-medium leading-relaxed">
             <RichText text={step.question} />
           </div>
 
@@ -59,15 +62,18 @@ export function StepView({ step, answer, onAnswer, onSubmit, phase, wrongChoiceI
           )}
 
           {(step.type === "mc" || step.type === "multi") && (
-            <ChoiceList
-              choices={choices}
-              multi={step.type === "multi"}
-              selected={answer?.kind === "choice" ? [answer.id] : answer?.kind === "choices" ? answer.ids : []}
-              onChange={(ids) => onAnswer(step.type === "mc" ? (ids[0] ? { kind: "choice", id: ids[0] } : null) : { kind: "choices", ids })}
-              disabled={locked}
-              wrongIds={phase === "wrong1" ? wrongChoiceIds : phase === "revealed" ? wrongChoiceIds : []}
-              correctIds={phase === "correct" || phase === "revealed" ? (step.type === "mc" ? [step.correct] : step.correct) : []}
-            />
+            <div className="grid gap-2">
+              {step.type === "multi" && <p className="text-sm text-muted">Select all that apply.</p>}
+              <ChoiceList
+                choices={choices}
+                multi={step.type === "multi"}
+                selected={answer?.kind === "choice" ? [answer.id] : answer?.kind === "choices" ? answer.ids : []}
+                onChange={(ids) => onAnswer(step.type === "mc" ? (ids[0] ? { kind: "choice", id: ids[0] } : null) : { kind: "choices", ids })}
+                disabled={locked}
+                wrongIds={phase === "wrong1" || phase === "revealed" ? wrongChoiceIds : []}
+                correctIds={phase === "correct" || phase === "revealed" ? (step.type === "mc" ? [step.correct] : step.correct) : []}
+              />
+            </div>
           )}
 
           {step.type === "numeric" && (
@@ -76,7 +82,6 @@ export function StepView({ step, answer, onAnswer, onSubmit, phase, wrongChoiceI
               onChange={(text) => onAnswer({ kind: "number", text })}
               onSubmit={onSubmit}
               disabled={locked}
-              placeholder={step.placeholder}
               prefix={step.prefix}
               suffix={step.suffix}
               state={inputState}

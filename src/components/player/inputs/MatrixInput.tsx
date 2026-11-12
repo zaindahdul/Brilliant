@@ -40,9 +40,10 @@ export function MatrixInput({ rows, cols, cells, onChange, onSubmit, disabled, p
   };
 
   const bracket = "w-2.5 shrink-0 border-y-2 border-text/80";
+  const unreadable = cells.some((row) => row.some((v) => v.trim() !== "" && parseNumber(v) === null));
   return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="flex items-center gap-3">
+    <div className="grid gap-2">
+      <div className="flex flex-wrap items-center gap-3">
         {prefix && (
           <span className="text-lg">
             <RichText text={prefix} inline />
@@ -84,9 +85,9 @@ export function MatrixInput({ rows, cols, cells, onChange, onSubmit, disabled, p
                         }
                       }}
                       className={cn(
-                        "h-12 w-16 rounded-lg border-2 bg-surface text-center font-mono text-base outline-none transition-colors",
-                        "focus:ring-4 focus:ring-[var(--ring)] disabled:opacity-80",
-                        state === "correct" ? "border-primary bg-primary-soft" : bad ? "border-danger bg-danger-soft/60" : invalid ? "border-danger" : "border-border-strong focus:border-blue",
+                        "h-11 w-16 rounded-lg border bg-surface text-center font-mono text-base outline-none transition-colors",
+                        "focus:ring-4 focus:ring-[var(--ring)] disabled:opacity-90",
+                        state === "correct" ? "border-primary" : bad || invalid ? "border-danger" : "border-border-strong focus:border-blue",
                       )}
                     />
                   </div>
@@ -97,7 +98,7 @@ export function MatrixInput({ rows, cols, cells, onChange, onSubmit, disabled, p
           <div className={cn(bracket, "rounded-r-md border-r-2")} aria-hidden />
         </div>
       </div>
-      <div className="h-5 text-xs text-muted">Fractions like 1/2 and expressions like sqrt(2)/2 are fine. Use arrow keys to move.</div>
+      {unreadable && <p className="text-sm text-muted">Every entry needs a number. Fractions (1/2) and sqrt(2) work too.</p>}
     </div>
   );
 }

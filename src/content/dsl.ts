@@ -123,7 +123,6 @@ export interface NumericOpts {
   tolerance?: number;
   hint: Rich;
   explanation: Rich;
-  placeholder?: string;
   prefix?: Rich;
   suffix?: Rich;
   answerDisplay?: string;

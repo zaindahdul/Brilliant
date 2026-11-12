@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Sparkles, Volume2, VolumeX } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import type { Lesson, Step } from "@/content/types";
 import { withLessonContext } from "@/content/context";
 import { isQuestion } from "@/content/types";
@@ -13,7 +13,7 @@ import { getStreakStatus, lessonStats } from "@/lib/progress/logic";
 import { sounds } from "@/lib/sound";
 import type { TutorContext } from "@/lib/ai/prompt";
 import { Button } from "@/components/ui/Button";
-import { ProgressBar, type SegmentState } from "./ProgressBar";
+import { ActionBar, PlayerHeader, TUTOR_OFFSET } from "./PlayerChrome";
 import { FeedbackPanel, type Phase } from "./FeedbackPanel";
 import { StepView } from "./StepView";
 import { LessonSummary } from "./LessonSummary";
@@ -176,7 +176,9 @@ function LessonPlayerInner({ lesson, unit, course, next }: Props) {
       if (done || !step) return;
       const target = e.target as HTMLElement | null;
       const typing = target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT" || target.isContentEditable);
-      if (e.key === "Enter" && !typing) {
+      // Enter on a focused link or button (other than an answer choice) activates that control, not the primary action.
+      const onControl = !!target?.closest?.("a, button:not([role=radio]):not([role=checkbox])");
+      if (e.key === "Enter" && !typing && !onControl) {
         e.preventDefault();
         if (!isQuestion(step)) continueNext();
         else if (st.phase === "answering") check();
@@ -198,15 +200,6 @@ function LessonPlayerInner({ lesson, unit, course, next }: Props) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [done, step, st.phase, st.wrongChoiceIds, check, tryAgain, continueNext]);
-
-  const segments: SegmentState[] = steps.map((s, i) => {
-    const r = results[s.id];
-    if (r === "correct") return "correct";
-    if (r === "wrong") return "wrong";
-    if (r === "reading") return "reading";
-    if (i === index) return "current";
-    return "upcoming";
-  });
 
   const tutorContext: TutorContext | null = useMemo(() => {
     if (!step) return null;
@@ -273,77 +266,58 @@ function LessonPlayerInner({ lesson, unit, course, next }: Props) {
 
   const q = isQuestion(step) ? step : null;
   const canCheck = q ? !isAnswerEmpty(st.answer) : true;
+  const resolved = st.phase === "correct" || st.phase === "revealed";
+  const stepsDone = steps.filter((s) => results[s.id]).length;
+
+  // After a first miss the tutor button asks for a hint straight away; otherwise it just opens the chat.
+  const openTutor = () => {
+    setTutorOpen(true);
+    if (st.phase === "wrong1" && settings.autoOfferNudge) setNudgeRequest((n) => n + 1);
+  };
 
   return (
-    <div className="min-h-dvh">
+    <div className={cn("min-h-dvh", tutorOpen && TUTOR_OFFSET)}>
       <div ref={topRef} />
-      {/* top chrome: back, progress, tutor */}
-      <header className="sticky top-0 z-30 border-b border-border/70 bg-bg/90 backdrop-blur">
-        <div className={cn("mx-auto flex max-w-3xl items-center gap-3 px-3 py-2.5", tutorOpen && "sm:mr-[400px]")}>
-          <button type="button" onClick={exit} aria-label="Exit lesson" className="rounded-full p-2 text-muted hover:bg-surface-2">
-            <ArrowLeft size={20} />
-          </button>
-          <div className="min-w-0 flex-1">
-            <ProgressBar segments={segments} label={`Step ${index + 1} of ${steps.length}`} />
-          </div>
-          <button
-            type="button"
-            aria-label={settings.sound ? "Mute sounds" : "Unmute sounds"}
-            onClick={() => store.getState().updateSettings({ sound: !settings.sound })}
-            className="rounded-full p-2 text-muted hover:bg-surface-2"
-          >
-            {settings.sound ? <Volume2 size={18} /> : <VolumeX size={18} />}
-          </button>
-          <button
-            type="button"
-            onClick={() => setTutorOpen((o) => !o)}
-            className={cn("inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold transition-colors", tutorOpen ? "bg-purple text-white" : "bg-purple-soft text-purple hover:brightness-95")}
-          >
-            <Sparkles size={15} /> <span className="hidden sm:inline">Tutor</span>
-          </button>
-        </div>
-      </header>
+      <PlayerHeader onExit={exit} done={stepsDone} current={index + 1} total={steps.length} label={`Step ${index + 1} of ${steps.length}`} />
 
-      <main className={cn("mx-auto w-full max-w-2xl px-4 pb-40 pt-6 transition-[margin]", tutorOpen && "sm:mr-[400px] lg:mx-auto lg:pr-[400px]")}>
-        <div className="eyebrow mb-3">
-          {unit.title} · {q ? `Problem ${questionIds.indexOf(q.id) + 1} of ${questionIds.length}` : "Concept"}
-        </div>
+      <main className="mx-auto w-full max-w-2xl px-4 pb-36 pt-4">
         <div key={step.id}>
           <StepView step={step} answer={st.answer} onAnswer={(a) => setSt((s) => ({ ...s, answer: a, invalid: undefined }))} onSubmit={check} phase={st.phase} wrongChoiceIds={st.wrongChoiceIds} attemptKey={st.attemptKey} />
         </div>
 
         {st.invalid && <p className="mt-3 text-sm text-danger">{st.invalid}</p>}
 
-        <div className="mt-5">
-          {q && st.phase !== "answering" ? (
-            <FeedbackPanel
-              phase={st.phase}
-              hint={st.feedback ?? q.hint}
-              explanation={q.explanation}
-              answer={formatAnswer(q)}
-              onTryAgain={tryAgain}
-              onContinue={continueNext}
-              onNudge={() => {
-                setTutorOpen(true);
-                setNudgeRequest((n) => n + 1);
-              }}
-              onAskWhy={() => setTutorOpen(true)}
-              isLast={isLast}
-            />
-          ) : (
-            <div className="flex items-center gap-3">
-              <Button variant={q ? "ink" : "primary"} size="xl" ledge onClick={q ? check : continueNext} disabled={!canCheck} className="min-w-40">
-                {q ? "Check" : isLast ? "Finish lesson" : "Continue"}
-              </Button>
-              {q && (
-                <button type="button" onClick={() => setTutorOpen(true)} className="text-sm font-medium text-muted hover:text-text">
-                  Stuck? Ask for a nudge
-                </button>
-              )}
-            </div>
-          )}
-        </div>
+        {q && st.phase !== "answering" && <FeedbackPanel phase={st.phase} hint={st.feedback ?? q.hint} explanation={q.explanation} answer={q.type === "mc" || q.type === "multi" ? undefined : formatAnswer(q)} />}
       </main>
+
+      <ActionBar
+        tutorOpen={tutorOpen}
+        secondary={
+          q && (
+            <Button variant="ghost" size="lg" onClick={openTutor} className="-ml-3">
+              <Sparkles size={16} /> {resolved ? "Talk it through" : st.phase === "wrong1" ? "Get a hint" : "Ask the tutor"}
+            </Button>
+          )
+        }
+      >
+        {!q ? (
+          <Button variant="primary" size="xl" ledge onClick={continueNext} className="min-w-32">
+            {isLast ? "Finish" : "Continue"}
+          </Button>
+        ) : st.phase === "answering" ? (
+          <Button variant="primary" size="xl" ledge onClick={check} disabled={!canCheck} className="min-w-32">
+            Check
+          </Button>
+        ) : st.phase === "wrong1" ? (
+          <Button variant="primary" size="xl" ledge onClick={tryAgain} autoFocus className="min-w-32">
+            Try again
+          </Button>
+        ) : (
+          <Button variant="primary" size="xl" ledge onClick={continueNext} autoFocus className="min-w-32">
+            {isLast ? "Finish" : "Continue"}
+          </Button>
+        )}
+      </ActionBar>
 
       {tutorContext && <TutorPanel open={tutorOpen} onClose={() => setTutorOpen(false)} chatId={`${lesson.id}:${step.id}`} context={tutorContext} nudgeRequest={nudgeRequest} />}
     </div>

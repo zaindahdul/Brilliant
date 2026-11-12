@@ -3,20 +3,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { Send, Sparkles, Square } from "lucide-react";
+import { ArrowUp, Square } from "lucide-react";
 import type { TutorContext } from "@/lib/ai/prompt";
 import { Button } from "@/components/ui/Button";
 import { RichText } from "@/components/ui/RichText";
 import { cn } from "@/lib/cn";
+import { useTutorStatus } from "./useTutorStatus";
 
-export interface TutorStatus {
-  configured: boolean;
-  provider?: string;
-  model?: string;
-  help?: string;
-}
-
-let statusCache: TutorStatus | null = null;
+export { useTutorStatus, type TutorStatus } from "./useTutorStatus";
 
 /**
  * The latest step context, read by the transport when a message is sent.
@@ -32,21 +26,6 @@ const transport = new DefaultChatTransport({
 
 export function normalizeMath(text: string): string {
   return text.replace(/\\\[((?:.|\n)*?)\\\]/g, (_, m) => `$$${m}$$`).replace(/\\\(((?:.|\n)*?)\\\)/g, (_, m) => `$${m}$`);
-}
-
-export function useTutorStatus(): TutorStatus | null {
-  const [status, setStatus] = useState<TutorStatus | null>(statusCache);
-  useEffect(() => {
-    if (statusCache) return;
-    fetch("/api/tutor/status", { cache: "no-store" })
-      .then((r) => r.json())
-      .then((s: TutorStatus) => {
-        statusCache = s;
-        setStatus(s);
-      })
-      .catch(() => setStatus({ configured: false, help: "Could not reach the tutor API." }));
-  }, []);
-  return status;
 }
 
 interface Props {
@@ -89,7 +68,7 @@ export function TutorChat({ chatId, context, nudgeRequest = 0, intro, className,
     const text = context.resolved
       ? "I've finished this. Help me check that I actually understand it."
       : lvl === 1
-        ? "I'm stuck. Give me a small nudge in the right direction — don't tell me the answer."
+        ? "I'm stuck. Give me a small hint in the right direction, without telling me the answer."
         : lvl === 2
           ? "Still stuck. Can you be more specific about where my thinking is going wrong?"
           : "I still can't get it. Walk me through the method step by step, but let me do the calculation.";
@@ -118,42 +97,47 @@ export function TutorChat({ chatId, context, nudgeRequest = 0, intro, className,
   };
 
   const notConfigured = status !== null && !status.configured;
+  const hintLabel = context.resolved ? "Check my understanding" : level === 1 ? "Give me a hint" : level === 2 ? "A bigger hint" : "Walk me through it";
 
   return (
     <div className={cn("flex min-h-0 flex-col", className)}>
-      <div ref={listRef} className="thin-scroll flex-1 overflow-y-auto px-4 py-3">
+      <div ref={listRef} className="thin-scroll flex-1 overflow-y-auto px-4 py-4">
         {notConfigured ? (
-          <div className="rounded-2xl border border-border bg-surface-2 p-3 text-sm">
-            <p className="font-semibold">The AI tutor isn&apos;t connected yet.</p>
+          <div className="text-sm">
+            <p className="font-medium">The AI tutor is not connected yet.</p>
             <pre className="mt-2 whitespace-pre-wrap font-mono text-xs text-muted">{status?.help}</pre>
-            <p className="mt-2 text-muted">Until then, the built-in hints after a miss still work.</p>
+            <p className="mt-2 text-muted">The built-in hint after a miss works without it.</p>
           </div>
         ) : messages.length === 0 ? (
-          <div className="grid gap-3 text-sm text-muted">{intro}</div>
+          <div className="grid gap-3 text-[15px] leading-relaxed text-muted">{intro}</div>
         ) : (
-          <div className="grid gap-3">
+          <div className="grid gap-4">
             {messages.map((m) => {
               const text = m.parts
                 .filter((p) => p.type === "text")
                 .map((p) => (p as { text: string }).text)
                 .join("");
               if (!text.trim() && m.role === "assistant") return null;
-              return (
-                <div key={m.id} className={cn("max-w-[92%] rounded-2xl px-3.5 py-2.5 text-[14.5px] leading-relaxed", m.role === "user" ? "justify-self-end bg-blue-soft" : "justify-self-start bg-surface-2")}>
+              return m.role === "user" ? (
+                <div key={m.id} className="max-w-[88%] justify-self-end rounded-2xl bg-surface-2 px-3.5 py-2 text-[15px] leading-relaxed">
+                  <RichText text={normalizeMath(text)} />
+                </div>
+              ) : (
+                <div key={m.id} className="text-[15px] leading-relaxed">
                   <RichText text={normalizeMath(text)} />
                 </div>
               );
             })}
-            {chatStatus === "submitted" && <div className="justify-self-start rounded-2xl bg-surface-2 px-3.5 py-2.5 text-sm text-muted">thinking…</div>}
-            {error && <div className="rounded-2xl bg-danger-soft px-3.5 py-2.5 text-sm text-danger-ink">{error.message?.trim() || "Something went wrong talking to the tutor. Try again."}</div>}
+            {chatStatus === "submitted" && <div className="text-sm text-muted">Thinking…</div>}
+            {error && <div className="rounded-xl bg-danger-soft px-3.5 py-2.5 text-sm text-danger-ink">{error.message?.trim() || "Something went wrong talking to the tutor. Try again."}</div>}
           </div>
         )}
       </div>
 
-      <div className="grid gap-2 border-t border-border p-3">
-        <div className="flex flex-wrap gap-2">
+      <div className="grid shrink-0 gap-2 border-t border-border p-3">
+        <div className="flex gap-2">
           <Button size="sm" variant="soft" onClick={() => void requestNudge()} disabled={busy || notConfigured}>
-            <Sparkles size={14} /> {context.resolved ? "Check my understanding" : level === 1 ? "Give me a nudge" : level === 2 ? "A bigger nudge" : "Walk me through it"}
+            {hintLabel}
           </Button>
           {busy && (
             <Button size="sm" variant="ghost" onClick={() => stop()}>
@@ -166,7 +150,7 @@ export function TutorChat({ chatId, context, nudgeRequest = 0, intro, className,
             e.preventDefault();
             void submit();
           }}
-          className="flex items-end gap-2"
+          className="flex items-end gap-2 rounded-2xl border border-border-strong bg-surface py-1.5 pl-3.5 pr-1.5 focus-within:border-blue"
         >
           <textarea
             value={input}
@@ -177,14 +161,15 @@ export function TutorChat({ chatId, context, nudgeRequest = 0, intro, className,
                 void submit();
               }
             }}
-            rows={2}
-            placeholder={placeholder ?? (context.resolved ? "Explain in your own words why that's the answer…" : "What have you tried so far?")}
+            rows={1}
+            aria-label={placeholder ?? "Message the tutor"}
+            placeholder={placeholder ?? "Message the tutor"}
             disabled={notConfigured}
-            className="thin-scroll min-h-11 flex-1 resize-none rounded-2xl border border-border-strong bg-surface px-3 py-2 text-sm focus:border-blue focus:outline-none"
+            className="thin-scroll max-h-32 min-h-8 flex-1 resize-none self-center bg-transparent py-1 text-[15px] [field-sizing:content] focus:outline-none"
           />
-          <Button type="submit" size="md" variant="ink" disabled={busy || !input.trim() || notConfigured} aria-label="Send">
-            <Send size={16} />
-          </Button>
+          <button type="submit" disabled={busy || !input.trim() || notConfigured} aria-label="Send" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink-btn text-bg transition-colors disabled:bg-surface-3 disabled:text-muted">
+            <ArrowUp size={16} strokeWidth={2.5} />
+          </button>
         </form>
       </div>
     </div>

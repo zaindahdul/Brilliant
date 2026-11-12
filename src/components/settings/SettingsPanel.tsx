@@ -1,24 +1,50 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Download, Upload, Trash2 } from "lucide-react";
+import { useRef, useState } from "react";
 import { useProgressStore } from "@/lib/progress/store";
 import { normalizeProgress } from "@/lib/progress/logic";
+import { useTutorStatus } from "@/components/tutor/useTutorStatus";
 import { Button } from "@/components/ui/Button";
-import { Card, Eyebrow, Pill } from "@/components/ui/Card";
 import { cn } from "@/lib/cn";
 
-function Toggle({ on, onChange, label, hint }: { on: boolean; onChange: (v: boolean) => void; label: string; hint?: string }) {
+function Row({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
-    <label className="flex cursor-pointer items-center justify-between gap-4 py-2">
-      <span>
-        <span className="font-medium">{label}</span>
-        {hint && <span className="block text-sm text-muted">{hint}</span>}
-      </span>
-      <button type="button" role="switch" aria-checked={on} onClick={() => onChange(!on)} className={cn("relative h-7 w-12 shrink-0 rounded-full transition-colors", on ? "bg-primary" : "bg-surface-3")}>
-        <span className={cn("absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-transform", on ? "left-6" : "left-1")} />
-      </button>
-    </label>
+    <div className="flex items-center justify-between gap-6 py-4">
+      <div className="min-w-0">
+        <p className="text-[15px] font-medium">{label}</p>
+        {hint && <p className="text-sm text-muted">{hint}</p>}
+      </div>
+      <div className="shrink-0">{children}</div>
+    </div>
+  );
+}
+
+function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boolean) => void; label: string }) {
+  return (
+    <button type="button" role="switch" aria-checked={on} aria-label={label} onClick={() => onChange(!on)} className={cn("relative block h-7 w-12 rounded-full transition-colors", on ? "bg-primary" : "bg-surface-3")}>
+      <span className={cn("absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-[left]", on ? "left-6" : "left-1")} />
+    </button>
+  );
+}
+
+function Segmented<T extends string | number>({ value, options, onChange, label }: { value: T; options: readonly { value: T; label: string }[]; onChange: (v: T) => void; label: string }) {
+  return (
+    <div role="group" aria-label={label} className="flex rounded-full bg-surface-2 p-1">
+      {options.map((o) => (
+        <button key={String(o.value)} type="button" aria-pressed={value === o.value} onClick={() => onChange(o.value)} className={cn("rounded-full px-3 py-1 text-sm font-medium transition-colors", value === o.value ? "bg-surface text-text shadow-sm" : "text-muted hover:text-text")}>
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="mt-10">
+      <p className="text-sm text-muted">{title}</p>
+      <div className="mt-1 divide-y divide-border border-y border-border">{children}</div>
+    </section>
   );
 }
 
@@ -27,16 +53,9 @@ export function SettingsPanel() {
   const update = useProgressStore((s) => s.updateSettings);
   const mergeIn = useProgressStore((s) => s.mergeIn);
   const resetAll = useProgressStore((s) => s.resetAll);
-  const [tutor, setTutor] = useState<{ configured: boolean; provider?: string; model?: string; help?: string } | null>(null);
+  const tutor = useTutorStatus();
   const [msg, setMsg] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    fetch("/api/tutor/status", { cache: "no-store" })
-      .then((r) => r.json())
-      .then(setTutor)
-      .catch(() => setTutor({ configured: false, help: "Could not reach /api/tutor/status" }));
-  }, []);
 
   const exportJson = () => {
     const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
@@ -62,78 +81,55 @@ export function SettingsPanel() {
   const s = state.settings;
 
   return (
-    <div className="mx-auto grid w-full max-w-2xl gap-6 px-4 py-8">
-      <div>
-        <Eyebrow>Settings</Eyebrow>
-        <h1 className="mt-1 font-serif text-4xl">Make it yours</h1>
-      </div>
+    <div className="mx-auto w-full max-w-2xl px-5 py-10 sm:py-14">
+      <h1 className="font-serif text-4xl">Settings</h1>
 
-      <Card className="grid gap-1 p-5">
-        <Eyebrow className="mb-2">Learning</Eyebrow>
-        <label className="flex items-center justify-between gap-4 py-2">
-          <span className="font-medium">Your name</span>
-          <input value={s.name ?? ""} onChange={(e) => update({ name: e.target.value })} placeholder="optional" className="h-10 w-48 rounded-xl border border-border-strong bg-surface px-3 text-sm focus:border-blue focus:outline-none" />
-        </label>
-        <Toggle on={s.sound} onChange={(v) => update({ sound: v })} label="Sounds" hint="Short tones for correct, wrong and lesson complete." />
-        <Toggle on={s.autoOfferNudge} onChange={(v) => update({ autoOfferNudge: v })} label="Offer a nudge after a miss" hint="Shows the 'Get a nudge' button in the try-again panel." />
-        <div className="flex items-center justify-between gap-4 py-2">
-          <span>
-            <span className="font-medium">Default level-check length</span>
-            <span className="block text-sm text-muted">Quick check (5) or practice (15).</span>
-          </span>
-          <div className="flex rounded-full bg-surface-2 p-1">
-            {([5, 15] as const).map((n) => (
-              <button key={n} type="button" onClick={() => update({ practiceLength: n })} className={cn("rounded-full px-3 py-1 text-sm font-semibold", s.practiceLength === n ? "bg-text text-bg" : "text-muted")}>
-                {n}
-              </button>
-            ))}
-          </div>
-        </div>
-      </Card>
+      <Section title="Learning">
+        <Row label="Your name" hint="Used in the greeting. Optional.">
+          <input aria-label="Your name" value={s.name ?? ""} onChange={(e) => update({ name: e.target.value })} className="h-10 w-44 rounded-xl border border-border-strong bg-surface px-3 text-[15px] focus:border-blue focus:outline-none" />
+        </Row>
+        <Row label="Sounds" hint="Short tones for right, wrong and lesson complete.">
+          <Toggle on={s.sound} onChange={(v) => update({ sound: v })} label="Sounds" />
+        </Row>
+        <Row label="Hint after a miss" hint="Get a hint asks the tutor straight away after a first wrong answer.">
+          <Toggle on={s.autoOfferNudge} onChange={(v) => update({ autoOfferNudge: v })} label="Hint after a miss" />
+        </Row>
+        <Row label="Theme">
+          <Segmented
+            label="Theme"
+            value={s.theme}
+            onChange={(v) => update({ theme: v })}
+            options={[
+              { value: "system", label: "System" },
+              { value: "light", label: "Light" },
+              { value: "dark", label: "Dark" },
+            ]}
+          />
+        </Row>
+      </Section>
 
-      <Card className="grid gap-3 p-5">
-        <Eyebrow>Appearance</Eyebrow>
-        <div className="flex gap-2">
-          {(["system", "light", "dark"] as const).map((t) => (
-            <button key={t} type="button" onClick={() => update({ theme: t })} className={cn("rounded-full border px-4 py-2 text-sm font-medium capitalize", s.theme === t ? "border-text bg-text text-bg" : "border-border bg-surface hover:border-border-strong")}>
-              {t}
-            </button>
-          ))}
-        </div>
-      </Card>
-
-      <Card className="grid gap-3 p-5">
-        <Eyebrow>AI tutor</Eyebrow>
-        {tutor === null ? (
-          <p className="text-sm text-muted">Checking…</p>
-        ) : tutor.configured ? (
-          <p className="text-sm">
-            <Pill tone="green">Connected</Pill> <span className="text-muted">
-              {tutor.provider} · {tutor.model}
-            </span>
-          </p>
-        ) : (
-          <div className="text-sm">
-            <Pill tone="gold">Not connected</Pill>
-            <pre className="mt-2 whitespace-pre-wrap rounded-xl bg-surface-2 p-3 font-mono text-xs text-muted">{tutor.help}</pre>
+      <Section title="AI tutor">
+        <Row label={tutor === null ? "Checking…" : tutor.configured ? "Connected" : "Not connected"} hint={tutor?.configured ? tutor.model : undefined}>
+          <span className={cn("block h-2.5 w-2.5 rounded-full", tutor === null ? "bg-surface-3" : tutor.configured ? "bg-primary" : "bg-gold")} aria-hidden />
+        </Row>
+        {tutor !== null && !tutor.configured && (
+          <div className="py-4">
+            <pre className="whitespace-pre-wrap rounded-xl bg-surface-2 p-3 font-mono text-xs text-muted">{tutor.help}</pre>
           </div>
         )}
-        <p className="text-sm text-muted">
-          The tutor receives the current step, your attempts, and (privately) the answer so it can diagnose — its instructions forbid revealing it. Change the model with <code>AI_MODEL</code> and how hard it thinks with <code>AI_EFFORT</code> in <code>.env.local</code>.
-        </p>
-      </Card>
+        <p className="py-4 text-sm text-muted">The tutor sees the step you are on and your attempts. It gives hints and walks through the method with you, and it is instructed never to give the answer.</p>
+      </Section>
 
-      <Card className="grid gap-3 p-5">
-        <Eyebrow>Your data</Eyebrow>
-        <p className="text-sm text-muted">
-          Progress lives in this browser and in <code>data/progress.json</code> on your machine. Export a backup before switching computers.
+      <Section title="Your data">
+        <p className="py-4 text-sm text-muted">
+          Progress is saved in this browser and in <code>data/progress.json</code> on this computer.
         </p>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 py-4">
           <Button variant="outline" onClick={exportJson}>
-            <Download size={16} /> Export JSON
+            Export
           </Button>
           <Button variant="outline" onClick={() => fileRef.current?.click()}>
-            <Upload size={16} /> Import JSON
+            Import
           </Button>
           <input
             ref={fileRef}
@@ -147,7 +143,8 @@ export function SettingsPanel() {
             }}
           />
           <Button
-            variant="danger"
+            variant="ghost"
+            className="text-danger!"
             onClick={() => {
               if (window.confirm("Reset ALL progress, streaks and XP? This cannot be undone.")) {
                 resetAll();
@@ -155,11 +152,11 @@ export function SettingsPanel() {
               }
             }}
           >
-            <Trash2 size={16} /> Reset everything
+            Reset everything
           </Button>
         </div>
-        {msg && <p className="text-sm text-muted">{msg}</p>}
-      </Card>
+        {msg && <p className="py-3 text-sm text-muted">{msg}</p>}
+      </Section>
     </div>
   );
 }
