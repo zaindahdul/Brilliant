@@ -14,6 +14,10 @@ import { TorsionSection } from "./solid/TorsionSection";
 import { BeamSection } from "./solid/BeamSection";
 import { ShearMoment } from "./solid/ShearMoment";
 import { PressureVessel } from "./solid/PressureVessel";
+import { MohrCircle } from "./solid/MohrCircle";
+import { BeamDeflection } from "./solid/BeamDeflection";
+import { ColumnBuckling } from "./solid/ColumnBuckling";
+import { LinkStability } from "./solid/LinkStability";
 
 interface Props {
   spec: VisualSpec;
@@ -49,5 +53,13 @@ export function Visual({ spec, onGoal, disabled }: Props) {
       return <ShearMoment config={spec.config} disabled={disabled} />;
     case "pressure-vessel":
       return <PressureVessel config={spec.config} disabled={disabled} />;
+    case "mohr-circle":
+      return <MohrCircle config={spec.config} disabled={disabled} />;
+    case "beam-deflection":
+      return <BeamDeflection config={spec.config} disabled={disabled} />;
+    case "column-buckling":
+      return <ColumnBuckling config={spec.config} disabled={disabled} />;
+    case "link-stability":
+      return <LinkStability config={spec.config} disabled={disabled} />;
   }
 }

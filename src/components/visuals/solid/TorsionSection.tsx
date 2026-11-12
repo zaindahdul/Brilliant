@@ -3,6 +3,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import type { TorsionSectionConfig } from "@/content/types";
 import { Math as TeX } from "@/components/ui/RichText";
+import { MoreNumbers } from "./shared";
 
 interface Props {
   config: TorsionSectionConfig;
@@ -473,17 +474,22 @@ export function TorsionSection({ config, disabled = false }: Props) {
         </g>
       </svg>
 
-      <div className="mx-auto grid w-full max-w-[480px] gap-2.5 rounded-2xl border border-border bg-surface-2/60 p-3 text-sm">
+      <div className="mx-auto grid w-full max-w-[480px] gap-2.5 text-sm">
+        <MoreNumbers>
         <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1.5">
-          <TeX tex={`J = ${st.hollow ? "\\frac{\\pi\\,(r_o^4 - r_i^4)}{2}" : "\\frac{\\pi r_o^4}{2}"} = ${numTex(st.J)}${texUnit(lu, 4)}`} />
+          <TeX tex={`J =${st.hollow ? "\\frac{\\pi\\,(r_o^4 - r_i^4)}{2}" : "\\frac{\\pi r_o^4}{2}"} = ${numTex(st.J)}${texUnit(lu, 4)}`} />
           <TeX tex={`\\tau_{\\max} = \\frac{T\\,r_o}{J} = ${numTex(st.tauMax)}${texUnit(tu)}`} />
           {st.hollow && <TeX tex={`\\tau(r_i) = \\frac{T\\,r_i}{J} = ${numTex(st.tauIn)}${texUnit(tu)}`} />}
           {phiPrime !== null && <TeX tex={`\\varphi' = \\frac{T}{GJ} = ${numTex(phiPrime)}\\,\\text{rad${lu ? `/${cleanUnit(lu)}` : ""}}`} />}
           {gammaMax !== null && <TeX tex={`\\gamma_{\\max} = r_o\\varphi' = ${numTex(gammaMax)}\\;(${numTex(gammaMax * 1e6, 3)}\\,\\mu)`} />}
         </div>
+        <p className="text-xs leading-relaxed text-muted">
+          Shear stress τ = σ<sub>zθ</sub> on the +z face (normal toward you): counter-clockwise for T &gt; 0, zero on the axis and growing linearly to τ<sub>max</sub> at r<sub>o</sub> (γ = rφ′, τ = Gγ).
+        </p>
+        </MoreNumbers>
 
         {init.sliders && (
-          <div className="grid gap-1.5">
+          <div className="order-first grid gap-1.5">
             <Slider label={`T = ${stepText(T, init.TR.step)}${units.torque ? ` ${units.torque}` : ""}`} value={T} min={init.TR.min} max={init.TR.max} step={init.TR.step} disabled={disabled} onChange={setT} />
             <Slider
               label={
@@ -520,10 +526,6 @@ export function TorsionSection({ config, disabled = false }: Props) {
             )}
           </div>
         )}
-
-        <p className="text-xs leading-relaxed text-muted">
-          Shear stress τ = σ<sub>zθ</sub> on the +z face (normal toward you): counter-clockwise for T &gt; 0, zero on the axis and growing linearly to τ<sub>max</sub> at r<sub>o</sub> (γ = rφ′, τ = Gγ).
-        </p>
       </div>
     </div>
   );

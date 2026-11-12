@@ -3,6 +3,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import type { BeamSectionConfig, BeamSectionShape } from "@/content/types";
 import { Math as TeX } from "@/components/ui/RichText";
+import { MoreNumbers } from "./shared";
 
 interface Props {
   config: BeamSectionConfig;
@@ -564,7 +565,8 @@ export function BeamSection({ config, disabled = false }: Props) {
         </text>
       </svg>
 
-      <div className="mx-auto grid w-full max-w-[480px] gap-2.5 rounded-2xl border border-border bg-surface-2/60 p-3 text-sm">
+      <div className="mx-auto grid w-full max-w-[480px] gap-2.5 text-sm">
+        <MoreNumbers>
         <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1.5">
           <span>
             <TeX tex={`${ybarTex} = ${numTex(P.ybar)}${texUnit(lu)}`} /> <span className="text-xs text-muted">from the bottom</span>
@@ -623,9 +625,13 @@ export function BeamSection({ config, disabled = false }: Props) {
             </div>
           </div>
         )}
+        <p className="text-xs leading-relaxed text-muted">
+          y is measured up from the neutral axis, which passes through the centroid. With σ = −My/I a positive (sagging) M compresses the top fibres and stretches the bottom ones; |σ| is largest at the fibre farthest from the N.A.
+        </p>
+        </MoreNumbers>
 
         {init.sliders && (
-          <div className="grid gap-1.5">
+          <div className="order-first grid gap-1.5">
             <Slider
               label={`M = ${stepText(M, init.MR.step)}${units.moment ? ` ${units.moment}` : ""}${M > 0 ? " (sag)" : M < 0 ? " (hog)" : ""}`}
               value={M}
@@ -643,10 +649,6 @@ export function BeamSection({ config, disabled = false }: Props) {
             )}
           </div>
         )}
-
-        <p className="text-xs leading-relaxed text-muted">
-          y is measured up from the neutral axis, which passes through the centroid. With σ = −My/I a positive (sagging) M compresses the top fibres and stretches the bottom ones; |σ| is largest at the fibre farthest from the N.A.
-        </p>
       </div>
     </div>
   );

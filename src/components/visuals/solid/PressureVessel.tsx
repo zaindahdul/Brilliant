@@ -3,6 +3,7 @@
 import { useId, useState } from "react";
 import type { PressureVesselConfig } from "@/content/types";
 import { Math as TeX } from "@/components/ui/RichText";
+import { MoreNumbers } from "./shared";
 
 interface Props {
   config: PressureVesselConfig;
@@ -162,8 +163,8 @@ function WallElement({ hoop, axial, ref0, kind }: { hoop: number; axial: number;
 
 const ACCENT = {
   blue: "accent-[var(--blue)]",
-  orange: "accent-[var(--orange)]",
-  teal: "accent-[var(--teal)]",
+  orange: "accent-[var(--blue)]",
+  teal: "accent-[var(--blue)]",
 } as const;
 
 function SliderRow({ label, value, min, max, step, disabled, onChange, accent, aria }: { label: React.ReactNode; value: number; min: number; max: number; step: number; disabled: boolean; onChange: (v: number) => void; accent: keyof typeof ACCENT; aria: string }) {
@@ -336,7 +337,7 @@ export function PressureVessel({ config, disabled = false }: Props) {
         <WallElement hoop={st.hoop} axial={st.axial} ref0={ref0} kind={kind} />
       </svg>
 
-      <div className="mx-auto grid w-full max-w-[480px] gap-2 rounded-2xl border border-border bg-surface-2/60 p-3 text-sm">
+      <div className="mx-auto grid w-full max-w-[480px] gap-2 text-sm">
         {config.sliders && (
           <div className="grid gap-1.5">
             <SliderRow label={`p = ${withUnit(fmtNum(p, 4), uP)}`} {...pR} value={p} disabled={disabled} accent="teal" aria="internal pressure p" onChange={setP} />
@@ -344,6 +345,7 @@ export function PressureVessel({ config, disabled = false }: Props) {
             <SliderRow label={`t = ${withUnit(fmtNum(t, 4), uL)}`} {...tR} min={tMin} value={t} disabled={disabled} accent="orange" aria="wall thickness t" onChange={setT} />
           </div>
         )}
+        <MoreNumbers>
         {kind === "cylinder" ? (
           <div className="grid gap-1">
             <div className="flex flex-wrap items-baseline gap-x-2 text-orange">
@@ -376,6 +378,7 @@ export function PressureVessel({ config, disabled = false }: Props) {
             <span className="rounded-full bg-danger-soft px-2.5 py-1 font-mono text-danger-ink">t must be positive</span>
           )}
         </div>
+        </MoreNumbers>
       </div>
     </div>
   );

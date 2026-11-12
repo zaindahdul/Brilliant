@@ -238,6 +238,65 @@ export interface PressureVesselConfig {
   units?: { pressure?: string; length?: string; stress?: string };
 }
 
+/**
+ * Mohr's circle of plane stress or strain (Govindjee 9.2.4, 9.3) next to the
+ * element it describes. Drawn with the book's convention: the shear axis points
+ * DOWN, so turning the element axes counter-clockwise by theta moves the point
+ * counter-clockwise by 2*theta around the circle.
+ */
+export interface MohrCircleConfig {
+  sxx: number;
+  syy: number;
+  /** Shear stress; for `quantity: "strain"` pass the tensor shear strain gamma/2. */
+  sxy: number;
+  /** Rotation of the element axes in degrees, counter-clockwise (default 0). */
+  theta?: number;
+  /** Sliders for the three components and for theta. */
+  sliders?: boolean;
+  /** Slider range for the components is -max..max (default: fits the starting state). */
+  max?: number;
+  unit?: string;
+  quantity?: "stress" | "strain";
+}
+
+/**
+ * Elastic deflection of a beam (Govindjee 8.4, EI v'''' = q). Loads are positive
+ * DOWNWARD, the way problems state them; the curve is the deflection v(x).
+ * Numbers must be in one consistent unit system (for example N, mm and N·mm²).
+ */
+export interface BeamDeflectionConfig {
+  length: number;
+  /** "cantilever" is built in at x = 0 and free at x = L; "simple" is pinned at both ends. */
+  support: "cantilever" | "simple";
+  load: { kind: "point"; x: number; P: number } | { kind: "udl"; w: number };
+  EI: number;
+  /** Sliders for the load (and its position for a point load). */
+  sliders?: boolean;
+  units?: { length?: string; force?: string; deflection?: string };
+}
+
+/** An Euler column (Govindjee 12.3): end conditions, critical load and buckled shape. */
+export interface ColumnBucklingConfig {
+  ends: "pinned-pinned" | "clamped-free" | "clamped-pinned" | "clamped-clamped";
+  /** Compressive load as a multiple of the pinned-pinned Euler load pi^2 EI / L^2 (default 0.5). */
+  load?: number;
+  /** A slider for the load and buttons for the end conditions. */
+  sliders?: boolean;
+}
+
+/**
+ * A rigid link standing on a torsional spring k under a vertical load P
+ * (Govindjee 12.2): the potential energy Pi(theta) = k theta^2/2 - P L (1 - cos theta)
+ * and which equilibria are stable.
+ */
+export interface LinkStabilityConfig {
+  /** The load as the ratio P L / k (the straight link is stable below 1). */
+  load: number;
+  /** Tilt of the link in degrees (default 0). */
+  theta?: number;
+  sliders?: boolean;
+}
+
 export type VisualSpec =
   | { kind: "lines"; config: LinesConfig }
   | { kind: "vectors"; config: VectorsConfig }
@@ -251,7 +310,11 @@ export type VisualSpec =
   | { kind: "torsion-section"; config: TorsionSectionConfig }
   | { kind: "beam-section"; config: BeamSectionConfig }
   | { kind: "shear-moment"; config: ShearMomentConfig }
-  | { kind: "pressure-vessel"; config: PressureVesselConfig };
+  | { kind: "pressure-vessel"; config: PressureVesselConfig }
+  | { kind: "mohr-circle"; config: MohrCircleConfig }
+  | { kind: "beam-deflection"; config: BeamDeflectionConfig }
+  | { kind: "column-buckling"; config: ColumnBucklingConfig }
+  | { kind: "link-stability"; config: LinkStabilityConfig };
 
 /* ------------------------------------------------------------------ */
 /* Steps                                                               */

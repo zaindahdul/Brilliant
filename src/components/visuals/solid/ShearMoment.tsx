@@ -3,6 +3,7 @@
 import { useId, useMemo, useState, type ReactNode } from "react";
 import type { BeamLoad, ShearMomentConfig } from "@/content/types";
 import { Math as TeX } from "@/components/ui/RichText";
+import { MoreNumbers } from "./shared";
 
 interface Props {
   config: ShearMomentConfig;
@@ -729,7 +730,8 @@ export function ShearMoment({ config, disabled = false }: Props) {
         </text>
       </svg>
 
-      <div className="mx-auto grid w-full max-w-[480px] gap-2.5 rounded-2xl border border-border bg-surface-2/60 p-3 text-sm">
+      <div className="mx-auto grid w-full max-w-[480px] gap-2.5 text-sm">
+        <MoreNumbers>
         <p className="text-xs leading-relaxed text-muted">
           Course convention: V = ∫σ<sub>xy</sub> dA, dV/dx = −q, dM/dx = −V (sign of V is opposite to Beer/Hibbeler). Loads P, w drawn downward have q = −w; M &gt; 0 is sagging.
         </p>
@@ -758,9 +760,15 @@ export function ShearMoment({ config, disabled = false }: Props) {
             <span className="text-xs text-muted">{mBig.map((e) => `M = ${e.v > 0 ? "+" : ""}${numText(e.v)}${mu ? ` ${mu}` : ""} ${where(e)} (${e.v > 0 ? "sagging" : "hogging"})`).join("; ")}</span>
           </div>
         </div>
+        {hasCouple && (
+          <p className="text-xs leading-relaxed text-muted">
+            Point moment: M̄ &gt; 0 is a clockwise couple (the sense drawn in Govindjee Fig. 8.10). It makes M(x) jump up by +M̄ at its location (q = M̄ δ′(x − a)); a counter-clockwise couple makes M jump down.
+          </p>
+        )}
+        </MoreNumbers>
 
         {config.sliders && loads.length > 0 && (
-          <div className="grid gap-1.5">
+          <div className="order-first grid gap-1.5">
             {loads.map((l, i) => {
               const r = ranges.mag[i] ?? signedRange(0, 10);
               const name = names[i];
@@ -789,12 +797,6 @@ export function ShearMoment({ config, disabled = false }: Props) {
               );
             })}
           </div>
-        )}
-
-        {hasCouple && (
-          <p className="text-xs leading-relaxed text-muted">
-            Point moment: M̄ &gt; 0 is a clockwise couple (the sense drawn in Govindjee Fig. 8.10). It makes M(x) jump up by +M̄ at its location (q = M̄ δ′(x − a)); a counter-clockwise couple makes M jump down.
-          </p>
         )}
       </div>
     </div>

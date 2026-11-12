@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { StressElementConfig } from "@/content/types";
 import { Math as TeX } from "@/components/ui/RichText";
+import { MoreNumbers } from "./shared";
 
 interface Props {
   config: StressElementConfig;
@@ -213,9 +214,9 @@ function FaceArrows({ sxx, syy, sxy, M }: { sxx: number; syy: number; sxy: numbe
 
 const ACCENT = {
   blue: "accent-[var(--blue)]",
-  orange: "accent-[var(--orange)]",
-  purple: "accent-[var(--purple)]",
-  teal: "accent-[var(--teal)]",
+  orange: "accent-[var(--blue)]",
+  purple: "accent-[var(--blue)]",
+  teal: "accent-[var(--blue)]",
 } as const;
 
 function SliderRow({ label, value, min, max, step, disabled, onChange, accent, aria }: { label: React.ReactNode; value: number; min: number; max: number; step: number; disabled: boolean; onChange: (v: number) => void; accent: keyof typeof ACCENT; aria: string }) {
@@ -338,11 +339,7 @@ export function StressElement({ config, disabled = false }: Props) {
         )}
       </svg>
 
-      <div className="mx-auto grid w-full max-w-[480px] gap-2 rounded-2xl border border-border bg-surface-2/60 p-3 text-sm">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <TeX tex={`\\boldsymbol{\\sigma}=\\begin{bmatrix}\\sigma_{xx} & \\sigma_{xy}\\\\ \\sigma_{yx} & \\sigma_{yy}\\end{bmatrix}=\\begin{bmatrix}${texNum(sxx)} & ${texNum(sxy)}\\\\ ${texNum(sxy)} & ${texNum(syy)}\\end{bmatrix}${unitTex}`} />
-          {!unitTex && unit && <span className="text-muted">{unit}</span>}
-        </div>
+      <div className="mx-auto grid w-full max-w-[480px] gap-2 text-sm">
         {config.sliders && (
           <div className="grid gap-1.5">
             <SliderRow label={`σxx = ${fmtNum(sxx, 4)}`} {...slider("sxx")} value={sxx} disabled={disabled} accent="blue" aria="sigma xx" onChange={(v) => setS((c) => ({ ...c, sxx: v }))} />
@@ -350,9 +347,20 @@ export function StressElement({ config, disabled = false }: Props) {
             <SliderRow label={`σxy = ${fmtNum(sxy, 4)}`} {...slider("sxy")} value={sxy} disabled={disabled} accent="purple" aria="sigma xy" onChange={(v) => setS((c) => ({ ...c, sxy: v }))} />
           </div>
         )}
+        {cut && cut.slider && <SliderRow label={`θ = ${fmtNum(theta, 3)}°`} min={0} max={thetaMax} step={1} value={theta} disabled={disabled} accent="teal" aria="angle of the cut normal" onChange={setTheta} />}
+        {cut && (
+          <div className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-[13px]">
+            <span className="text-primary">σn = t·n = {fmtNum(tr.sn, 4)}</span>
+            <span className="text-danger">τ = t·s = {fmtNum(tr.tau, 4)}</span>
+          </div>
+        )}
+        <MoreNumbers>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <TeX tex={`\\boldsymbol{\\sigma}=\\begin{bmatrix}\\sigma_{xx} & \\sigma_{xy}\\\\ \\sigma_{yx} & \\sigma_{yy}\\end{bmatrix}=\\begin{bmatrix}${texNum(sxx)} & ${texNum(sxy)}\\\\ ${texNum(sxy)} & ${texNum(syy)}\\end{bmatrix}${unitTex}`} />
+          {!unitTex && unit && <span className="text-muted">{unit}</span>}
+        </div>
         {cut && (
           <div className="grid gap-1.5">
-            {cut.slider && <SliderRow label={`θ = ${fmtNum(theta, 3)}°`} min={0} max={thetaMax} step={1} value={theta} disabled={disabled} accent="teal" aria="angle of the cut normal" onChange={setTheta} />}
             <div className="text-xs text-muted">
               Normal n at θ = {fmtNum(theta, 3)}° from +x · the cut line makes {fmtNum(cutToX, 3)}° with the x-axis · the shaded part is kept.
             </div>
@@ -362,12 +370,8 @@ export function StressElement({ config, disabled = false }: Props) {
             <div className="overflow-x-auto text-teal">
               <TeX tex={`t=\\boldsymbol{\\sigma}n=(\\sigma_{xx}\\cos\\theta+\\sigma_{xy}\\sin\\theta,\\ \\sigma_{xy}\\cos\\theta+\\sigma_{yy}\\sin\\theta)=(${texNum(tr.t[0])},\\ ${texNum(tr.t[1])})`} />
             </div>
-            <div className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-[13px]">
-              <span className="text-primary">σn = t·n = {fmtNum(tr.sn, 4)}</span>
-              <span className="text-danger">τ = t·s = {fmtNum(tr.tau, 4)}</span>
-              <span className="text-muted">
-                |t| = {fmtNum(Math.hypot(tr.t[0], tr.t[1]), 4)} {unit}
-              </span>
+            <div className="font-mono text-[13px] text-muted">
+              |t| = {fmtNum(Math.hypot(tr.t[0], tr.t[1]), 4)} {unit}
             </div>
           </div>
         )}
@@ -375,6 +379,7 @@ export function StressElement({ config, disabled = false }: Props) {
           First index = the face&apos;s normal, second = the force direction. Positive components point in + directions on the labelled + faces and in − directions on the opposite faces (σxy = σyx).
           {cut && " Dashed green = normal part σn n, dashed red = shear part τ s of the traction t."}
         </div>
+        </MoreNumbers>
       </div>
     </div>
   );

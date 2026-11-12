@@ -5,3 +5,4 @@
  */
 import "./solid-mechanics-1";
 import "./solid-mechanics-2";
+import "./solid-mechanics-3";

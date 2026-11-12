@@ -13,6 +13,7 @@ import { unit6 } from "./linear-algebra/unit6-vector-spaces";
 import { unit7 } from "./linear-algebra/unit7-eigenvalues";
 import { unit8 } from "./linear-algebra/unit8-orthogonality";
 import { unit9 } from "./linear-algebra/unit9-symmetric-svd";
+import { sm0 } from "./solid-mechanics/unit0-foundations";
 import { sm1 } from "./solid-mechanics/unit1-axial-bars";
 import { sm2 } from "./solid-mechanics/unit2-stress";
 import { sm3 } from "./solid-mechanics/unit3-strain";
@@ -20,6 +21,9 @@ import { sm4 } from "./solid-mechanics/unit4-constitutive";
 import { sm5 } from "./solid-mechanics/unit5-basic-techniques";
 import { sm6 } from "./solid-mechanics/unit6-torsion";
 import { sm7 } from "./solid-mechanics/unit7-beams";
+import { sm8 } from "./solid-mechanics/unit8-beam-deflection-shear";
+import { sm9 } from "./solid-mechanics/unit9-transformation-yield";
+import { sm10 } from "./solid-mechanics/unit10-stability";
 
 export const course: Course = {
   id: "linear-algebra",
@@ -33,10 +37,10 @@ export const course: Course = {
 export const solidMechanics: Course = {
   id: "solid-mechanics",
   title: "Solid Mechanics",
-  tagline: "Built for CE C30 / ME C85: kinematics, equilibrium, constitution — on every problem.",
+  tagline: "Start from zero: forces and equilibrium, then stress, strain, torsion, bending and buckling.",
   description:
-    "A problem-first tour of the deformable-bodies half of Berkeley's Introduction to Solid Mechanics (Govindjee, Engineering Mechanics of Deformable Solids, chapters 2–8): axial bars, stress and strain as tensors, generalized Hooke's law, pressure vessels and Saint-Venant, torsion, and the bending of beams — in the order the lectures cover them. Every lesson starts with something you manipulate and ends with you doing the calculation.",
-  units: [sm1, sm2, sm3, sm4, sm5, sm6, sm7],
+    "A complete first course in solid mechanics that assumes no background. It follows Berkeley's CE C30 / ME C85 (Govindjee, Engineering Mechanics of Deformable Solids, chapters 1–9 and 12): forces and equilibrium, axial bars, stress and strain, Hooke's law, pressure vessels, torsion, bending and deflection of beams, stress transformation and yield, and buckling. Every lesson builds one idea at a time and ends with you doing the calculation.",
+  units: [sm0, sm1, sm2, sm3, sm4, sm5, sm6, sm7, sm8, sm9, sm10],
 };
 
 export const courses: Course[] = [course, solidMechanics];

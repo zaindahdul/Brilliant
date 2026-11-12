@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { AxialBarConfig } from "@/content/types";
 import { Math as TeX } from "@/components/ui/RichText";
+import { MoreNumbers } from "./shared";
 
 interface Props {
   config: AxialBarConfig;
@@ -505,9 +506,9 @@ function DiagramPanel({ top, title, pts, labels, signed, stroke, X, cutX, cutV, 
 
 const ACCENT = {
   blue: "accent-[var(--blue)]",
-  orange: "accent-[var(--orange)]",
-  teal: "accent-[var(--teal)]",
-  purple: "accent-[var(--purple)]",
+  orange: "accent-[var(--blue)]",
+  teal: "accent-[var(--blue)]",
+  purple: "accent-[var(--blue)]",
 } as const;
 
 function SliderRow({ label, value, min, max, step, disabled, onChange, accent = "blue", aria }: { label: React.ReactNode; value: number; min: number; max: number; step: number; disabled: boolean; onChange: (v: number) => void; accent?: keyof typeof ACCENT; aria: string }) {
@@ -568,9 +569,11 @@ export function AxialBar({ config, disabled = false }: Props) {
   const showDistRow = config.distributed !== undefined && (b0 !== 0 || !!config.sliders);
   const distCount = Math.max(2, Math.floor((W - padL - padR) / 24));
   const segLabelY = BAR_Y + BAR_HALF + (showDistRow ? 40 : 16);
-  const barAreaH = segLabelY + 22;
   const showList: string[] = Array.isArray(config.show) && config.show.length ? config.show : ["R"];
   const kinds = (["R", "sigma", "u"] as const).filter((k) => showList.includes(k));
+  // A uniform bar that only shows its internal force has no use for its area and modulus.
+  const showProps = sol.segs.length > 1 || kinds.some((k) => k !== "R");
+  const barAreaH = showProps ? segLabelY + 22 : segLabelY - 2;
   const panelTop = (i: number) => barAreaH + i * (PANEL_H + PANEL_GAP);
   const axisY = kinds.length ? panelTop(kinds.length - 1) + PANEL_H + 14 : barAreaH + 4;
   const H = axisY + 8;
@@ -685,12 +688,16 @@ export function AxialBar({ config, disabled = false }: Props) {
                   {s.label}
                 </text>
               )}
-              <text x={mid} y={segLabelY} fontSize={10} textAnchor="middle" fill="var(--muted)">
-                {narrow ? `A ${fmtNum(s.A, 3)}` : `A = ${withUnit(fmtNum(s.A, 4), uLen ? `${uLen}²` : "")}`}
-              </text>
-              <text x={mid} y={segLabelY + 12} fontSize={10} textAnchor="middle" fill="var(--muted)">
-                {narrow ? `E ${fmtNum(s.E, 3)}` : `E = ${withUnit(fmtNum(s.E, 4), uS)}`}
-              </text>
+              {showProps && (
+                <>
+                  <text x={mid} y={segLabelY} fontSize={10} textAnchor="middle" fill="var(--muted)">
+                    {narrow ? `A ${fmtNum(s.A, 3)}` : `A = ${withUnit(fmtNum(s.A, 4), uLen ? `${uLen}²` : "")}`}
+                  </text>
+                  <text x={mid} y={segLabelY + 12} fontSize={10} textAnchor="middle" fill="var(--muted)">
+                    {narrow ? `E ${fmtNum(s.E, 3)}` : `E = ${withUnit(fmtNum(s.E, 4), uS)}`}
+                  </text>
+                </>
+              )}
             </g>
           );
         })}
@@ -738,7 +745,7 @@ export function AxialBar({ config, disabled = false }: Props) {
         ))}
       </svg>
 
-      <div className="mx-auto grid w-full max-w-[480px] gap-2 rounded-2xl border border-border bg-surface-2/60 p-3 text-sm">
+      <div className="mx-auto grid w-full max-w-[480px] gap-2 text-sm">
         {config.sliders && (loadsCfg.length > 0 || config.distributed !== undefined) && (
           <div className="grid gap-1.5">
             {loadsCfg.map((_, i) => (
@@ -763,9 +770,16 @@ export function AxialBar({ config, disabled = false }: Props) {
           <span>
             {jump ? `R: ${fmtNum(at.RL, 4)} → ${withUnit(fmtNum(at.RR, 4), uF)}` : `R = ${withUnit(fmtNum(at.RR, 4), uF)}`} <span className="text-muted">({jump ? "jumps at the load" : state(at.RR)})</span>
           </span>
-          <span className="text-purple">{sJump ? `σ: ${fmtNum(at.sL, 4)} → ${withUnit(fmtNum(at.sR, 4), uS)}` : `σ = ${withUnit(fmtNum(at.sR, 4), uS)}`}</span>
-          <span className="text-teal">u = {withUnit(fmtNum(at.u, 4), uD)}</span>
+          {kinds.includes("sigma") && <span className="text-purple">{sJump ? `σ: ${fmtNum(at.sL, 4)} → ${withUnit(fmtNum(at.sR, 4), uS)}` : `σ = ${withUnit(fmtNum(at.sR, 4), uS)}`}</span>}
+          {kinds.includes("u") && <span className="text-teal">u = {withUnit(fmtNum(at.u, 4), uD)}</span>}
         </div>
+        <MoreNumbers>
+        {(!kinds.includes("sigma") || !kinds.includes("u")) && (
+          <div className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-[13px]">
+            {!kinds.includes("sigma") && <span className="text-purple">{sJump ? `σ: ${fmtNum(at.sL, 4)} → ${withUnit(fmtNum(at.sR, 4), uS)}` : `σ = ${withUnit(fmtNum(at.sR, 4), uS)}`}</span>}
+            {!kinds.includes("u") && <span className="text-teal">u = {withUnit(fmtNum(at.u, 4), uD)}</span>}
+          </div>
+        )}
         <div className="flex flex-wrap gap-1.5 text-xs">
           <Chip>max |R| = {withUnit(fmtNum(maxR, 4), uF)}</Chip>
           <Chip>max |σ| = {withUnit(fmtNum(maxS, 4), uS)}</Chip>
@@ -804,6 +818,7 @@ export function AxialBar({ config, disabled = false }: Props) {
           </span>
           <span>u &gt; 0: moves in +x (right)</span>
         </div>
+        </MoreNumbers>
       </div>
     </div>
   );

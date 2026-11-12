@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { StrainGridConfig } from "@/content/types";
 import { Math as TeX } from "@/components/ui/RichText";
+import { MoreNumbers } from "./shared";
 import { makePlane, type Plane } from "../plane";
 
 interface Props {
@@ -91,9 +92,9 @@ const TICKS = [-1, -0.5, 0, 0.5, 1];
 const HALO = { paintOrder: "stroke", stroke: "var(--surface)", strokeWidth: 3.5, strokeLinejoin: "round" } as const;
 const ACCENT = {
   blue: "accent-[var(--blue)]",
-  orange: "accent-[var(--orange)]",
-  purple: "accent-[var(--purple)]",
-  teal: "accent-[var(--teal)]",
+  orange: "accent-[var(--blue)]",
+  purple: "accent-[var(--blue)]",
+  teal: "accent-[var(--blue)]",
 } as const;
 
 function SliderRow({ label, value, min, max, step, disabled, onChange, accent, aria }: { label: React.ReactNode; value: number; min: number; max: number; step: number; disabled: boolean; onChange: (v: number) => void; accent: keyof typeof ACCENT; aria: string }) {
@@ -205,10 +206,7 @@ export function StrainGrid({ config, disabled = false }: Props) {
         )}
       </svg>
 
-      <div className="mx-auto grid w-full max-w-[420px] gap-2 rounded-2xl border border-border bg-surface-2/60 p-3 text-sm">
-        <div className="overflow-x-auto">
-          <TeX tex={`\\begin{bmatrix}\\partial u/\\partial x & \\partial u/\\partial y\\\\ \\partial v/\\partial x & \\partial v/\\partial y\\end{bmatrix}=\\begin{bmatrix}${tv(g[0][0])} & ${tv(g[0][1])}\\\\ ${tv(g[1][0])} & ${tv(g[1][1])}\\end{bmatrix}${micro ? "\\times 10^{-6}" : ""}`} />
-        </div>
+      <div className="mx-auto grid w-full max-w-[420px] gap-2 text-sm">
         {config.sliders && (
           <div className="grid grid-cols-1 gap-x-4 gap-y-1.5 sm:grid-cols-2">
             {names.map((name, i) => {
@@ -221,6 +219,12 @@ export function StrainGrid({ config, disabled = false }: Props) {
           <span className="text-blue">εxx = ∂u/∂x = {sv(m.exx)}</span>
           <span className="text-orange">εyy = ∂v/∂y = {sv(m.eyy)}</span>
           <span className="text-purple">γxy = ∂u/∂y + ∂v/∂x = {sv(m.gxy)}</span>
+        </div>
+        <MoreNumbers>
+        <div className="overflow-x-auto">
+          <TeX tex={`\\begin{bmatrix}\\partial u/\\partial x & \\partial u/\\partial y\\\\ \\partial v/\\partial x & \\partial v/\\partial y\\end{bmatrix}=\\begin{bmatrix}${tv(g[0][0])} & ${tv(g[0][1])}\\\\ ${tv(g[1][0])} & ${tv(g[1][1])}\\end{bmatrix}${micro ? "\\times 10^{-6}" : ""}`} />
+        </div>
+        <div className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-[13px]">
           <span className="text-purple">εxy = ½γxy = {sv(m.exy)}</span>
           <span className="text-teal">ω = ½(∂v/∂x − ∂u/∂y) = {sv(m.omega)}</span>
         </div>
@@ -236,6 +240,7 @@ export function StrainGrid({ config, disabled = false }: Props) {
           Blue lines were horizontal (x-fibres), orange were vertical (y-fibres); dashed = undeformed. γxy &gt; 0 closes the corner angle; ω &gt; 0 is a counter-clockwise rigid rotation and produces no strain.
           {micro && " μ = 10⁻⁶."}
         </div>
+        </MoreNumbers>
       </div>
     </div>
   );

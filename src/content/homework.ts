@@ -208,9 +208,13 @@ export const sectionLessons: Record<string, string[]> = {
 /* CE C30 / ME C85                                                     */
 /* ------------------------------------------------------------------ */
 
-const NOT_COVERED = "Not covered by the course yet.";
-
 const solidMechanicsSets: HomeworkSet[] = [
+  {
+    id: "lec11",
+    lectures: "11",
+    due: "2026-09-25",
+    sections: [{ section: "ch. 1", problems: "1.8", book: "govindjee" }],
+  },
   {
     id: "lec13-14",
     lectures: "13–14",
@@ -275,9 +279,9 @@ const solidMechanicsSets: HomeworkSet[] = [
     lectures: "31–33",
     due: "2026-11-13",
     sections: [
-      { section: "§8.4", problems: "8.19, 8.34", note: NOT_COVERED, book: "govindjee" },
-      { section: "§8.5", problems: "8.38", note: NOT_COVERED, book: "govindjee" },
-      { section: "§8.6", problems: "8.41, 8.47", note: NOT_COVERED, book: "govindjee" },
+      { section: "§8.4", problems: "8.19, 8.34", book: "govindjee" },
+      { section: "§8.5", problems: "8.38", book: "govindjee" },
+      { section: "§8.6", problems: "8.41, 8.47", book: "govindjee" },
     ],
   },
   {
@@ -285,27 +289,28 @@ const solidMechanicsSets: HomeworkSet[] = [
     lectures: "34–36",
     due: "2026-11-20",
     sections: [
-      { section: "§9.1–9.2.1", problems: "9.1", note: NOT_COVERED, book: "govindjee" },
-      { section: "§9.2.2–9.2.3", problems: "9.2, 9.4", note: NOT_COVERED, book: "govindjee" },
-      { section: "§9.2.4–9.2.5", problems: "9.6, 9.11", note: NOT_COVERED, book: "govindjee" },
+      { section: "§9.1–9.2.1", problems: "9.1", book: "govindjee" },
+      { section: "§9.2.2–9.2.3", problems: "9.2, 9.4", book: "govindjee" },
+      { section: "§9.2.4–9.2.5", problems: "9.6, 9.11", book: "govindjee" },
     ],
   },
   {
     id: "lec37-42",
-    lectures: "37–42",
+    lectures: "37–43",
     due: "2026-12-04",
     note: "Two weeks of lectures: Thanksgiving week falls in between.",
     sections: [
-      { section: "§9.3", problems: "9.15, 9.16a, 9.18", note: NOT_COVERED, book: "govindjee" },
-      { section: "§9.4", problems: "9.25, 9.26, 9.28, 9.29", note: NOT_COVERED, book: "govindjee" },
-      { section: "§12.1–12.2", problems: "12.1, 12.4, 12.5, 12.12", note: NOT_COVERED, book: "govindjee" },
-      { section: "§12.3", problems: "12.14, 12.15", note: NOT_COVERED, book: "govindjee" },
+      { section: "§9.3", problems: "9.15, 9.16a, 9.18", book: "govindjee" },
+      { section: "§9.4", problems: "9.25, 9.26, 9.28, 9.29", book: "govindjee" },
+      { section: "§12.1–12.2", problems: "12.1, 12.4, 12.5, 12.12", book: "govindjee" },
+      { section: "§12.3", problems: "12.14, 12.15", book: "govindjee" },
     ],
   },
 ];
 
-/** Which lessons teach each Govindjee section (§8.4 onward isn't covered yet). */
+/** Which lessons teach each Govindjee section. */
 const solidMechanicsSectionLessons: Record<string, string[]> = {
+  "ch. 1": ["sm0-l1-forces-and-units", "sm0-l2-moments-and-resultants", "sm0-l3-equilibrium-and-free-body-diagrams", "sm0-l4-internal-forces", "sm0-l5-work-and-energy"],
   "§2.1–2.3": ["sm1-l1-displacement-and-strain", "sm1-l2-stress-and-equilibrium", "sm1-l3-hookes-law"],
   "§2.4–2.4.1": ["sm1-l4-axial-response", "sm1-l5-indeterminate-bars"],
   "§2.4.2": ["sm1-l6-differential-equation"],
@@ -323,6 +328,16 @@ const solidMechanicsSectionLessons: Record<string, string[]> = {
   "§8.1": ["sm7-l1-kinematics-of-bending"],
   "§8.2": ["sm7-l2-equilibrium-shear-moment"],
   "§8.3": ["sm7-l3-elastic-response", "sm7-l4-composite-beams"],
+  "§8.4": ["sm8-l1-beam-equation", "sm8-l2-deflection-problems"],
+  "§8.5": ["sm8-l3-two-axis-bending"],
+  "§8.6": ["sm8-l4-shear-stress", "sm8-l5-shear-flow"],
+  "§9.1–9.2.1": ["sm9-l1-stress-transformation"],
+  "§9.2.2–9.2.3": ["sm9-l2-principal-stresses"],
+  "§9.2.4–9.2.5": ["sm9-l3-mohrs-circle"],
+  "§9.3": ["sm9-l4-strain-transformation"],
+  "§9.4": ["sm9-l5-yield-criteria"],
+  "§12.1–12.2": ["sm10-l1-stability-and-energy", "sm10-l2-rigid-link", "sm10-l3-two-link-systems"],
+  "§12.3": ["sm10-l4-euler-buckling", "sm10-l5-slenderness-and-design"],
 };
 
 /* ------------------------------------------------------------------ */
