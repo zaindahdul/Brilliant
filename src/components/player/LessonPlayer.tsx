@@ -12,6 +12,7 @@ import { useProgressStore } from "@/lib/progress/store";
 import { getStreakStatus, lessonStats } from "@/lib/progress/logic";
 import { sounds } from "@/lib/sound";
 import type { TutorContext } from "@/lib/ai/prompt";
+import { plainCorrectAnswer } from "@/lib/ai/context";
 import { Button } from "@/components/ui/Button";
 import { ActionBar, PlayerHeader, TUTOR_OFFSET } from "./PlayerChrome";
 import { FeedbackPanel, type Phase } from "./FeedbackPanel";
@@ -347,19 +348,3 @@ function describeAnswer(step: Step, a: AnswerValue): string {
   }
 }
 
-function plainCorrectAnswer(step: Exclude<Step, { type: "reading" }>): string {
-  switch (step.type) {
-    case "mc":
-      return toPlainText(step.choices.find((c) => c.id === step.correct)?.text ?? "");
-    case "multi":
-      return step.correct.map((id) => toPlainText(step.choices.find((c) => c.id === id)?.text ?? "")).join(" + ");
-    case "numeric":
-      return String(step.answer);
-    case "matrix":
-      return step.answer.map((r) => `[${r.join(", ")}]`).join(" ");
-    case "order":
-      return step.correct.map((id) => toPlainText(step.items.find((x) => x.id === id)?.text ?? "")).join(" → ");
-    case "goal":
-      return "the diagram must satisfy the stated goal";
-  }
-}

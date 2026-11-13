@@ -1,6 +1,7 @@
 import { APICallError, convertToModelMessages, createUIMessageStreamResponse, streamText, toUIMessageStream, type UIMessage } from "ai";
 import type { AnthropicProviderOptions } from "@ai-sdk/anthropic";
 import { z } from "zod";
+import { answerGuard, isGuarded } from "@/lib/ai/guard";
 import { buildInstructions, TutorContextSchema } from "@/lib/ai/prompt";
 import { describeSetup, getTutorModel } from "@/lib/ai/provider";
 
@@ -51,6 +52,10 @@ export async function POST(req: Request) {
     model: tutor.model,
     instructions: buildInstructions(context),
     messages: await convertToModelMessages(recent),
+    // The instructions forbid giving the answer; this checks what was actually written. While a step is
+    // unresolved the reply is released a sentence at a time, and a sentence that states the answer is
+    // replaced by a redirect instead of being sent.
+    experimental_transform: isGuarded(context) ? answerGuard(context) : undefined,
     // Claude thinks before every reply and those tokens count against the output cap, so the cap
     // leaves room for them — the instructions keep the visible nudge short. No sampling parameters:
     // current Claude models reject temperature / top_p / top_k.

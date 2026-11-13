@@ -13,6 +13,7 @@ import { XP } from "@/lib/progress/types";
 import { newSeed, rngFrom, shuffle } from "@/lib/random";
 import { sounds } from "@/lib/sound";
 import type { TutorContext } from "@/lib/ai/prompt";
+import { plainCorrectAnswer } from "@/lib/ai/context";
 import { Button } from "@/components/ui/Button";
 import { ActionBar, PlayerHeader, TUTOR_OFFSET } from "./PlayerChrome";
 import { FeedbackPanel, type Phase } from "./FeedbackPanel";
@@ -207,7 +208,7 @@ export function PracticePlayer({ unit, course, problems, generatorIds, fixed, mo
       body: toPlainText(q.body),
       question: toPlainText(q.question),
       choices: q.type === "mc" || q.type === "multi" ? q.choices.map((c) => ({ id: c.id, text: toPlainText(c.text) })) : undefined,
-      correctAnswer: toPlainText(formatAnswer(q).value),
+      correctAnswer: plainCorrectAnswer(q),
       explanation: toPlainText(q.explanation),
       hint: toPlainText(q.hint),
       attempts,
